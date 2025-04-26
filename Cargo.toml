@@ -1,0 +1,11 @@
+[package]
+name = "pepecore"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+filebuffer = "1.0.0"
+zune-psd = "0.5.0-rc0"
+zune-core = "0.5.0-rc0"
+image = "0.25.6"
+thiserror = "1.0"
