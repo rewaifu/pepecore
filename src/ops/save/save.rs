@@ -92,8 +92,6 @@ pub fn svec_save(img: SVec, path: &str) -> Result<(), SaveError> {
 }
 #[cfg(test)]
 mod tests {
-    use crate::array::svec::Shape;
-    // use image::save_buffer;
     use super::*;
     use crate::enums::ImgColor;
     use crate::ops::read::read::read_in_path;
