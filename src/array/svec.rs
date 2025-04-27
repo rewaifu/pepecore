@@ -1,13 +1,7 @@
 use crate::enums::ImgData;
+use crate::errors::SVecError;
 use std::any::TypeId;
 
-#[derive(Debug)]
-pub enum SVecError {
-    TypeMismatch {
-        expected: &'static str,
-        actual: &'static str,
-    },
-}
 #[derive(Debug)]
 pub struct Shape {
     height: usize,
@@ -17,15 +11,11 @@ pub struct Shape {
 #[derive(Debug)]
 pub struct SVec {
     shape: Shape,
-    data: ImgData,
+    pub data: ImgData,
 }
 impl Shape {
     pub fn new(height: usize, width: usize, channels: Option<usize>) -> Self {
-        Self {
-            height,
-            width,
-            channels,
-        }
+        Self { height, width, channels }
     }
     pub fn get_height(&self) -> usize {
         self.height
@@ -202,10 +192,7 @@ mod tests {
             Ok(data_mut) => {
                 data_mut[0] = 10;
             }
-            Err(e) => panic!(
-                "Ожидали мутабельные данные типа u8, но получили ошибку: {:?}",
-                e
-            ),
+            Err(e) => panic!("Ожидали мутабельные данные типа u8, но получили ошибку: {:?}", e),
         }
 
         match svec.get_data::<u8>() {

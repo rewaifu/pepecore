@@ -12,41 +12,19 @@ fn decode_size_psd(bytes: &[u8]) -> (u32, u32) {
     let mut height: u32 = 0;
     let mut width: u32 = 0;
     height += bytes[3] as u32;
-    height += if bytes[2] > 0 {
-        bytes[2] as u32 * 256
-    } else {
-        0
-    };
-    height += if bytes[1] > 0 {
-        bytes[1] as u32 * 256 * 256
-    } else {
-        0
-    };
+    height += if bytes[2] > 0 { bytes[2] as u32 * 256 } else { 0 };
+    height += if bytes[1] > 0 { bytes[1] as u32 * 256 * 256 } else { 0 };
     width += bytes[7] as u32;
-    width += if bytes[6] > 0 {
-        bytes[6] as u32 * 256
-    } else {
-        0
-    };
-    width += if bytes[5] > 0 {
-        bytes[5] as u32 * 256 * 256
-    } else {
-        0
-    };
+    width += if bytes[6] > 0 { bytes[6] as u32 * 256 } else { 0 };
+    width += if bytes[5] > 0 { bytes[5] as u32 * 256 * 256 } else { 0 };
     (height, width)
 }
 pub fn psd_din_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let size_bites: &[u8] = &buffer[14..22];
-    let channels = if buffer[13] > 1 {
-        Some(buffer[13] as usize)
-    } else {
-        None
-    };
+    let channels = if buffer[13] > 1 { Some(buffer[13] as usize) } else { None };
 
     let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder
-        .decode_raw()
-        .map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
+    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
 
     let (height, width) = decode_size_psd(size_bites);
     Ok(if &buffer[23] == &16 {
@@ -66,10 +44,7 @@ pub fn psd_din_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
             }),
         )
     } else {
-        SVec::new(
-            Shape::new(height as usize, width as usize, channels),
-            ImgData::U8(px),
-        )
+        SVec::new(Shape::new(height as usize, width as usize, channels), ImgData::U8(px))
     })
 }
 pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
@@ -77,9 +52,7 @@ pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let channels = buffer[13];
 
     let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder
-        .decode_raw()
-        .map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
+    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
 
     let (height, width) = decode_size_psd(size_bites);
     Ok(SVec::new(
@@ -114,10 +87,7 @@ pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                     vec
                 }
             } else {
-                return Err(PsdDecodingError(format!(
-                    "Unexpected channel count = {}",
-                    channels
-                )));
+                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             })
         } else {
             if channels == 3 {
@@ -130,10 +100,7 @@ pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                 }
                 ImgData::U8(rgb_values)
             } else {
-                return Err(PsdDecodingError(format!(
-                    "Unexpected channel count = {}",
-                    channels
-                )));
+                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             }
         },
     ))
@@ -143,9 +110,7 @@ pub fn psd_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let channels = buffer[13];
 
     let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder
-        .decode_raw()
-        .map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
+    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
 
     let (height, width) = decode_size_psd(size_bites);
     Ok(SVec::new(
@@ -184,10 +149,7 @@ pub fn psd_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                     vec
                 }
             } else {
-                return Err(PsdDecodingError(format!(
-                    "Unexpected channel count = {}",
-                    channels
-                )));
+                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             })
         } else {
             if channels == 3 {
@@ -208,10 +170,7 @@ pub fn psd_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                 }
                 ImgData::U8(rgb_values)
             } else {
-                return Err(PsdDecodingError(format!(
-                    "Unexpected channel count = {}",
-                    channels
-                )));
+                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             }
         },
     ))
@@ -221,9 +180,7 @@ pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let channels = buffer[13];
 
     let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder
-        .decode_raw()
-        .map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
+    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
 
     let (height, width) = decode_size_psd(size_bites);
     Ok(SVec::new(
@@ -250,8 +207,7 @@ pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                         let b = (b_hi << 8) | b_lo; // B (16 бит)
 
                         // Преобразование в яркость по стандарту BT.709
-                        let gray =
-                            (0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32) as u16;
+                        let gray = (0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32) as u16;
 
                         // Добавляем преобразованный серый цвет
                         vec.push(gray);
@@ -273,10 +229,7 @@ pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                     vec
                 }
             } else {
-                return Err(PsdDecodingError(format!(
-                    "Unexpected channel count = {}",
-                    channels
-                )));
+                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             })
         } else {
             if channels == 1 {
@@ -285,17 +238,11 @@ pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                 let mut values = Vec::with_capacity(px.len() / 3);
 
                 for rgb in px.chunks(3) {
-                    values.push(
-                        (rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722)
-                            as u8,
-                    );
+                    values.push((rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8);
                 }
                 ImgData::U8(values)
             } else {
-                return Err(PsdDecodingError(format!(
-                    "Unexpected channel count = {}",
-                    channels
-                )));
+                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             }
         },
     ))
@@ -305,9 +252,7 @@ pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let channels = buffer[13];
 
     let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder
-        .decode_raw()
-        .map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
+    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
 
     let (height, width) = decode_size_psd(size_bites);
     Ok(SVec::new(
@@ -334,8 +279,7 @@ pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                         let b = (b_hi << 8) | b_lo; // B (16 бит)
 
                         // Преобразование в яркость по стандарту BT.709
-                        let gray =
-                            (0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32) as u16;
+                        let gray = (0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32) as u16;
 
                         // Добавляем преобразованный серый цвет
                         vec.push(gray);
@@ -359,10 +303,7 @@ pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                     vec
                 }
             } else {
-                return Err(PsdDecodingError(format!(
-                    "Unexpected channel count = {}",
-                    channels
-                )));
+                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             })
         } else {
             if channels == 1 {
@@ -371,18 +312,12 @@ pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
                 let mut values = Vec::with_capacity(px.len() / 3);
 
                 for rgb in px.chunks(3) {
-                    values.push(
-                        (rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722)
-                            as u8,
-                    );
+                    values.push((rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8);
                     values.push(u8::MAX)
                 }
                 ImgData::U8(values)
             } else {
-                return Err(PsdDecodingError(format!(
-                    "Unexpected channel count = {}",
-                    channels
-                )));
+                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             }
         },
     ))
@@ -396,46 +331,16 @@ pub fn img_din_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let width = img.width() as usize;
     let height = img.height() as usize;
     Ok(match &img {
-        DynamicImage::ImageLuma8(img) => SVec::new(
-            Shape::new(height, width, None),
-            ImgData::U8(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageLumaA8(img) => SVec::new(
-            Shape::new(height, width, Some(2)),
-            ImgData::U8(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageRgb8(img) => SVec::new(
-            Shape::new(height, width, Some(3)),
-            ImgData::U8(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageRgba8(img) => SVec::new(
-            Shape::new(height, width, Some(4)),
-            ImgData::U8(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageLuma16(img) => SVec::new(
-            Shape::new(height, width, None),
-            ImgData::U16(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageLumaA16(img) => SVec::new(
-            Shape::new(height, width, Some(2)),
-            ImgData::U16(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageRgb16(img) => SVec::new(
-            Shape::new(height, width, Some(3)),
-            ImgData::U16(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageRgba16(img) => SVec::new(
-            Shape::new(height, width, Some(4)),
-            ImgData::U16(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageRgb32F(img) => SVec::new(
-            Shape::new(height, width, Some(3)),
-            ImgData::F32(img.as_raw().clone()),
-        ),
-        DynamicImage::ImageRgba32F(img) => SVec::new(
-            Shape::new(height, width, Some(4)),
-            ImgData::F32(img.as_raw().clone()),
-        ),
+        DynamicImage::ImageLuma8(img) => SVec::new(Shape::new(height, width, None), ImgData::U8(img.as_raw().clone())),
+        DynamicImage::ImageLumaA8(img) => SVec::new(Shape::new(height, width, Some(2)), ImgData::U8(img.as_raw().clone())),
+        DynamicImage::ImageRgb8(img) => SVec::new(Shape::new(height, width, Some(3)), ImgData::U8(img.as_raw().clone())),
+        DynamicImage::ImageRgba8(img) => SVec::new(Shape::new(height, width, Some(4)), ImgData::U8(img.as_raw().clone())),
+        DynamicImage::ImageLuma16(img) => SVec::new(Shape::new(height, width, None), ImgData::U16(img.as_raw().clone())),
+        DynamicImage::ImageLumaA16(img) => SVec::new(Shape::new(height, width, Some(2)), ImgData::U16(img.as_raw().clone())),
+        DynamicImage::ImageRgb16(img) => SVec::new(Shape::new(height, width, Some(3)), ImgData::U16(img.as_raw().clone())),
+        DynamicImage::ImageRgba16(img) => SVec::new(Shape::new(height, width, Some(4)), ImgData::U16(img.as_raw().clone())),
+        DynamicImage::ImageRgb32F(img) => SVec::new(Shape::new(height, width, Some(3)), ImgData::F32(img.as_raw().clone())),
+        DynamicImage::ImageRgba32F(img) => SVec::new(Shape::new(height, width, Some(4)), ImgData::F32(img.as_raw().clone())),
         _ => return Err(ImgDecodingError("Unsupported image color mod".to_string())),
     })
 }
@@ -450,15 +355,15 @@ pub fn img_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     Ok(SVec::new(
         Shape::new(height, width, Some(3)),
         match &img {
-            DynamicImage::ImageLuma8(_)
-            | DynamicImage::ImageLumaA8(_)
-            | DynamicImage::ImageRgba8(_) => ImgData::U8(img.to_rgb8().as_raw().clone()),
+            DynamicImage::ImageLuma8(_) | DynamicImage::ImageLumaA8(_) | DynamicImage::ImageRgba8(_) => {
+                ImgData::U8(img.to_rgb8().as_raw().clone())
+            }
 
             DynamicImage::ImageRgb8(img) => ImgData::U8(img.as_raw().clone()),
 
-            DynamicImage::ImageLuma16(_)
-            | DynamicImage::ImageLumaA16(_)
-            | DynamicImage::ImageRgba16(_) => ImgData::U16(img.to_rgb16().as_raw().clone()),
+            DynamicImage::ImageLuma16(_) | DynamicImage::ImageLumaA16(_) | DynamicImage::ImageRgba16(_) => {
+                ImgData::U16(img.to_rgb16().as_raw().clone())
+            }
 
             DynamicImage::ImageRgb16(img) => ImgData::U16(img.as_raw().clone()),
 
@@ -481,15 +386,15 @@ pub fn img_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     Ok(SVec::new(
         Shape::new(height, width, Some(4)),
         match &img {
-            DynamicImage::ImageLuma8(_)
-            | DynamicImage::ImageLumaA8(_)
-            | DynamicImage::ImageRgb8(_) => ImgData::U8(img.to_rgba8().as_raw().clone()),
+            DynamicImage::ImageLuma8(_) | DynamicImage::ImageLumaA8(_) | DynamicImage::ImageRgb8(_) => {
+                ImgData::U8(img.to_rgba8().as_raw().clone())
+            }
 
             DynamicImage::ImageRgba8(img) => ImgData::U8(img.as_raw().clone()),
 
-            DynamicImage::ImageLuma16(_)
-            | DynamicImage::ImageLumaA16(_)
-            | DynamicImage::ImageRgb16(_) => ImgData::U16(img.to_rgba16().as_raw().clone()),
+            DynamicImage::ImageLuma16(_) | DynamicImage::ImageLumaA16(_) | DynamicImage::ImageRgb16(_) => {
+                ImgData::U16(img.to_rgba16().as_raw().clone())
+            }
 
             DynamicImage::ImageRgba16(img) => ImgData::U16(img.as_raw().clone()),
 
@@ -511,17 +416,15 @@ pub fn img_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     Ok(SVec::new(
         Shape::new(height, width, None),
         match &img {
-            DynamicImage::ImageRgba8(_)
-            | DynamicImage::ImageLumaA8(_)
-            | DynamicImage::ImageRgb8(_) => ImgData::U8(img.to_luma8().as_raw().clone()),
-            DynamicImage::ImageLuma8(img) => ImgData::U8(img.as_raw().clone()),
-            DynamicImage::ImageRgba16(_)
-            | DynamicImage::ImageLumaA16(_)
-            | DynamicImage::ImageRgb16(_) => ImgData::U16(img.to_luma16().as_raw().clone()),
-            DynamicImage::ImageLuma16(img) => ImgData::U16(img.as_raw().clone()),
-            DynamicImage::ImageRgb32F(_) | DynamicImage::ImageRgba32F(_) => {
-                ImgData::F32(img.to_luma32f().as_raw().clone())
+            DynamicImage::ImageRgba8(_) | DynamicImage::ImageLumaA8(_) | DynamicImage::ImageRgb8(_) => {
+                ImgData::U8(img.to_luma8().as_raw().clone())
             }
+            DynamicImage::ImageLuma8(img) => ImgData::U8(img.as_raw().clone()),
+            DynamicImage::ImageRgba16(_) | DynamicImage::ImageLumaA16(_) | DynamicImage::ImageRgb16(_) => {
+                ImgData::U16(img.to_luma16().as_raw().clone())
+            }
+            DynamicImage::ImageLuma16(img) => ImgData::U16(img.as_raw().clone()),
+            DynamicImage::ImageRgb32F(_) | DynamicImage::ImageRgba32F(_) => ImgData::F32(img.to_luma32f().as_raw().clone()),
             _ => return Err(ImgDecodingError("Unsupported image color mod".to_string())),
         },
     ))
@@ -537,17 +440,15 @@ pub fn img_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     Ok(SVec::new(
         Shape::new(height, width, None),
         match &img {
-            DynamicImage::ImageRgba8(_)
-            | DynamicImage::ImageLuma8(_)
-            | DynamicImage::ImageRgb8(_) => ImgData::U8(img.to_luma_alpha8().as_raw().clone()),
-            DynamicImage::ImageLumaA8(img) => ImgData::U8(img.as_raw().clone()),
-            DynamicImage::ImageRgba16(_)
-            | DynamicImage::ImageLuma16(_)
-            | DynamicImage::ImageRgb16(_) => ImgData::U16(img.to_luma_alpha16().as_raw().clone()),
-            DynamicImage::ImageLumaA16(img) => ImgData::U16(img.as_raw().clone()),
-            DynamicImage::ImageRgb32F(_) | DynamicImage::ImageRgba32F(_) => {
-                ImgData::F32(img.to_luma_alpha32f().as_raw().clone())
+            DynamicImage::ImageRgba8(_) | DynamicImage::ImageLuma8(_) | DynamicImage::ImageRgb8(_) => {
+                ImgData::U8(img.to_luma_alpha8().as_raw().clone())
             }
+            DynamicImage::ImageLumaA8(img) => ImgData::U8(img.as_raw().clone()),
+            DynamicImage::ImageRgba16(_) | DynamicImage::ImageLuma16(_) | DynamicImage::ImageRgb16(_) => {
+                ImgData::U16(img.to_luma_alpha16().as_raw().clone())
+            }
+            DynamicImage::ImageLumaA16(img) => ImgData::U16(img.as_raw().clone()),
+            DynamicImage::ImageRgb32F(_) | DynamicImage::ImageRgba32F(_) => ImgData::F32(img.to_luma_alpha32f().as_raw().clone()),
             _ => return Err(ImgDecodingError("Unsupported image color mod".to_string())),
         },
     ))

@@ -2,7 +2,8 @@
 name = "pepecore"
 version = "0.1.0"
 edition = "2024"
-
+repository = "https://github.com/rewaifu/pepecore"
+license = "MIT"
 [workspace.package]
 edition = "2024"
 publish = false
