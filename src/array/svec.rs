@@ -1,6 +1,7 @@
 use crate::enums::ImgData;
 use crate::errors::SVecError;
 use std::any::TypeId;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct Shape {
@@ -8,7 +9,7 @@ pub struct Shape {
     width: usize,
     channels: Option<usize>,
 }
-#[derive(Debug)]
+
 pub struct SVec {
     shape: Shape,
     pub data: ImgData,
@@ -115,7 +116,40 @@ impl SVec {
         }
     }
 }
+impl fmt::Debug for SVec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (w, h, c_opt) = self.shape();
+        let c = c_opt.unwrap_or(1);
 
+        writeln!(f, "SVec (shape: {}x{}x{}):", w, h, c)?;
+
+        match &self.data {
+            ImgData::U8(data) => fmt_data(f, data, w, h, c),
+            ImgData::U16(data) => fmt_data(f, data, w, h, c),
+            ImgData::F32(data) => fmt_data(f, data, w, h, c),
+        }
+    }
+}
+
+fn fmt_data<T: fmt::Debug>(f: &mut fmt::Formatter<'_>, data: &[T], w: usize, h: usize, c: usize) -> fmt::Result {
+    for y in 0..h {
+        for x in 0..w {
+            write!(f, "[")?;
+            for ch in 0..c {
+                let idx = (y * w + x) * c + ch;
+                if idx < data.len() {
+                    write!(f, "{:?}", data[idx])?;
+                    if ch != c - 1 {
+                        write!(f, ", ")?;
+                    }
+                }
+            }
+            write!(f, "] ")?;
+        }
+        writeln!(f)?;
+    }
+    Ok(())
+}
 #[cfg(test)]
 mod tests {
     use super::*;
