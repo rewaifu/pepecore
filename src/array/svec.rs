@@ -1,4 +1,4 @@
-use crate::enums::ImgData;
+use crate::enums::{ImgData, PixelType};
 use crate::errors::SVecError;
 use std::any::TypeId;
 use std::fmt;
@@ -80,7 +80,9 @@ impl SVec {
             }
         }
     }
-
+    pub fn pixel_type(&self) -> PixelType {
+        self.data.pixel_type()
+    }
     pub fn get_data_mut<T: 'static>(&mut self) -> Result<&mut [T], SVecError> {
         match &mut self.data {
             ImgData::U8(data) => {
