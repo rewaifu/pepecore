@@ -12,6 +12,14 @@ pub enum ImgData {
     U8(Vec<u8>),
     U16(Vec<u16>),
 }
+#[derive(Clone, Debug)]
+pub enum DotType {
+    CIRCLE,
+    CROSS,
+    ELLIPSE,
+    LINE,
+    INVLINE,
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PixelType {
     U8,

@@ -2,7 +2,10 @@ use crate::array::svec::SVec;
 use crate::enums::ImgColor;
 use crate::errors::DecodeError;
 use crate::errors::DecodeError::FileOpenError;
-use crate::ops::read::decode::{img_din_decode, img_gray_decode, img_graya_decode, img_rgb_decode, img_rgba_decode, psd_din_decode, psd_gray_decode, psd_graya_decode, psd_rgb_decode, psd_rgba_decode};
+use crate::ops::read::decode::{
+    img_din_decode, img_gray_decode, img_graya_decode, img_rgb_decode, img_rgba_decode, psd_din_decode, psd_gray_decode,
+    psd_graya_decode, psd_rgb_decode, psd_rgba_decode,
+};
 use filebuffer::FileBuffer;
 
 pub fn read_in_path(path: &str, img_color: ImgColor) -> Result<SVec, DecodeError> {

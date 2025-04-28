@@ -31,9 +31,7 @@ pub enum HalftoneError {
     #[error("Image has no channels")]
     NoChannelsError,
 
-    #[error(
-        "Mismatch between number of dot sizes ({0}) and number of channels ({1})"
-    )]
+    #[error("Mismatch between number of dot sizes ({0}) and number of channels ({1})")]
     DotSizeMismatch(usize, usize),
 
     #[error("dot_circle returned invalid data: {0}")]
