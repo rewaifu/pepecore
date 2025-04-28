@@ -23,3 +23,19 @@ pub enum SaveError {
 pub enum SVecError {
     TypeMismatch { expected: &'static str, actual: &'static str },
 }
+#[derive(Debug, Error)]
+pub enum HalftoneError {
+    #[error("Failed to get mutable image data: {0}")]
+    GetDataError(String),
+
+    #[error("Image has no channels")]
+    NoChannelsError,
+
+    #[error(
+        "Mismatch between number of dot sizes ({0}) and number of channels ({1})"
+    )]
+    DotSizeMismatch(usize, usize),
+
+    #[error("dot_circle returned invalid data: {0}")]
+    DotCircleError(String),
+}

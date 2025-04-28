@@ -3,7 +3,6 @@ use crate::enums::ImgData;
 use crate::errors::SaveError;
 use crate::errors::SaveError::{GraySaveError, RGBSaveError, UnsupportedChannelSaveError};
 use image::{ImageBuffer, Luma, LumaA, Rgb, Rgba};
-use std::error::Error;
 
 pub fn svec_save(img: SVec, path: &str) -> Result<(), SaveError> {
     let (height, width, channel) = img.shape();
@@ -89,15 +88,4 @@ pub fn svec_save(img: SVec, path: &str) -> Result<(), SaveError> {
 
         _ => return Err(UnsupportedChannelSaveError(format!("{:?}", channel))),
     })
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::enums::ImgColor;
-    use crate::ops::read::read::read_in_path;
-    #[test]
-    fn test_save_svec() {
-        let img = read_in_path("/run/media/umzi/H/dat/df2k/для тестов/130klin/1.jpg", ImgColor::RGBA).unwrap();
-        svec_save(img, "test3.png");
-    }
 }

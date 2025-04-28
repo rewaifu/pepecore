@@ -33,7 +33,7 @@ pub fn dot_circle(dot_size: usize) -> SVec {
 
     coordinates.sort_unstable_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
 
-    for (n, &(i, j, g)) in coordinates.iter().enumerate() {
+    for (n, &(i, j, _)) in coordinates.iter().enumerate() {
         let value = step * n as f32;
         mut_dot[i * dot_size + j] = 0.5 + value;
         mut_inv_dot[i * dot_size + j] = 0.503 - value;

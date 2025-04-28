@@ -3,17 +3,18 @@ use crate::errors::SVecError;
 use std::any::TypeId;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Shape {
     height: usize,
     width: usize,
     channels: Option<usize>,
 }
-
+#[derive(Clone)]
 pub struct SVec {
     shape: Shape,
     pub data: ImgData,
 }
+
 impl Shape {
     pub fn new(height: usize, width: usize, channels: Option<usize>) -> Self {
         Self { height, width, channels }
