@@ -1,0 +1,9 @@
+[package]
+name = "pepecore-resize"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+pepecore.workspace = true
+thiserror = "2.0.12"

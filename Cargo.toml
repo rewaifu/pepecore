@@ -4,9 +4,17 @@ version = "0.1.0"
 edition = "2024"
 repository = "https://github.com/rewaifu/pepecore"
 license = "MIT"
+
+[workspace]
+members = ["crates/*"]
+resolver = "3"
+
 [workspace.package]
 edition = "2024"
 publish = false
+
+[workspace.dependencies]
+pepecore = { path = "." }
 
 [dependencies]
 filebuffer = "1.0.0"

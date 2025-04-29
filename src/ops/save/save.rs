@@ -1,11 +1,13 @@
+use std::path::Path;
 use crate::array::svec::SVec;
 use crate::enums::ImgData;
 use crate::errors::SaveError;
 use crate::errors::SaveError::{GraySaveError, RGBSaveError, UnsupportedChannelSaveError};
 use image::{ImageBuffer, Luma, LumaA, Rgb, Rgba};
 
-pub fn svec_save(img: SVec, path: &str) -> Result<(), SaveError> {
+pub fn svec_save<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveError> {
     let (height, width, channel) = img.shape();
+    
     Ok(match channel {
         Some(1) | None => match img.data {
             ImgData::F32(data) => {

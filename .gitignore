@@ -1,2 +1,12 @@
+# IDE's
 /.idea
+
+# Temporary files
 /target
+
+# Temporary images
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.psd

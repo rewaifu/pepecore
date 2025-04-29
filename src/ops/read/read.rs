@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+use std::path::Path;
 use crate::array::svec::SVec;
 use crate::enums::ImgColor;
 use crate::errors::DecodeError;
@@ -8,8 +10,9 @@ use crate::ops::read::decode::{
 };
 use filebuffer::FileBuffer;
 
-pub fn read_in_path(path: &str, img_color: ImgColor) -> Result<SVec, DecodeError> {
-    let img_buffer = FileBuffer::open(path).map_err(|e| FileOpenError(format!("Path: {} FileBuffer error: {:?}", path, e)))?;
+pub fn read_in_path<P: AsRef<Path> + ?Sized + Debug>(path: &P, img_color: ImgColor) -> Result<SVec, DecodeError> {
+    let img_buffer = FileBuffer::open(path).map_err(|e| FileOpenError(format!("Path: {:?} FileBuffer error: {:?}", &path, e)))?;
+    
     Ok(match &img_buffer[..4] {
         [56, 66, 80, 83] => match img_color {
             ImgColor::DYNAMIC => psd_din_decode(&img_buffer)?,
