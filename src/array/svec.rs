@@ -9,6 +9,27 @@ pub struct Shape {
     width: usize,
     channels: Option<usize>,
 }
+
+impl From<Vec<usize>> for Shape {
+    fn from(vec: Vec<usize>) -> Self {
+        Self {
+            height: vec[0],
+            width: vec[1],
+            channels: vec.get(2).cloned(),
+        }
+    }   
+}
+
+impl From<&[usize]> for Shape {
+    fn from(value: &[usize]) -> Self {
+        Self {
+            height: value[0],
+            width: value[1],
+            channels: value.get(2).cloned(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct SVec {
     shape: Shape,
@@ -35,13 +56,16 @@ impl Shape {
         if self.channels.is_some() { 3 } else { 2 }
     }
 }
+
 impl SVec {
     pub fn new(shape: Shape, data: ImgData) -> Self {
         SVec { shape, data }
     }
+    
     pub fn shape(&self) -> (usize, usize, Option<usize>) {
         self.shape.get_shape()
     }
+    
     pub fn get_len(&self) -> usize {
         let shape = self.shape.get_shape();
         shape.0 * shape.1 * shape.2.unwrap_or(1)
@@ -119,6 +143,7 @@ impl SVec {
         }
     }
 }
+
 impl fmt::Debug for SVec {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (w, h, c_opt) = self.shape();
