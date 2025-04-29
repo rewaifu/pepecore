@@ -1,0 +1,17 @@
+[project]
+name = "pepecore"
+dynamic = ["version"]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>2",
+]
+
+[tool.maturin]
+profile = "release"
+strip = true
+python-source = "python"
+python-packages = ["pepecore"]
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"

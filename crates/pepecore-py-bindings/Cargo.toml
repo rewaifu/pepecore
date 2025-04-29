@@ -1,0 +1,15 @@
+[package]
+name = "pepecore-py-bindings"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+name = "pepecore"
+crate-type = ["cdylib"]
+
+[dependencies]
+numpy = "0.24.0"
+pepecore.workspace = true
+pepecore-resize.workspace = true
+pyo3 = { version = "0.24.2", features = ["extension-module"] }

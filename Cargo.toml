@@ -15,6 +15,7 @@ publish = false
 
 [workspace.dependencies]
 pepecore = { path = "." }
+pepecore-resize = { path = "crates/pepecore-resize" }
 
 [dependencies]
 filebuffer = "1.0.0"

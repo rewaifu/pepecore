@@ -16,17 +16,13 @@ pub fn calculate_dst_size(
     }
 
     if let Some(h) = height {
-        let w = ((src_width as f32) * (h as f32) / (src_height as f32))
-            .round()
-            .max(1.0) as usize;
-        return (h,w);
+        let w = ((src_width as f32) * (h as f32) / (src_height as f32)).round().max(1.0) as usize;
+        return (h, w);
     }
-    
+
     if let Some(w) = width {
-        let h = ((src_height as f32) * (w as f32) / (src_width as f32))
-            .round()
-            .max(1.0) as usize;
-        return (h,w);
+        let h = ((src_height as f32) * (w as f32) / (src_width as f32)).round().max(1.0) as usize;
+        return (h, w);
     }
 
     (src_height, src_width)
