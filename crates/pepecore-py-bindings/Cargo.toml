@@ -15,5 +15,5 @@ pepecore-resize = { workspace = true, optional = true }
 pyo3 = { version = "0.24.2", features = ["extension-module", "abi3-py39"] }
 
 [features]
-default = ["resize"]
+default = []
 resize = ["dep:pepecore-resize"]

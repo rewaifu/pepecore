@@ -1,12 +1,30 @@
 [project]
 name = "pepecore"
 dynamic = ["version"]
+classifiers = [
+    "OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
 requires-python = ">=3.9"
 dependencies = [
     "numpy>2",
 ]
 
+[project.urls]
+homepage = "https://github.com/rewaifu/pepecore"
+repository = "https://github.com/rewaifu/pepecore"
+
 [tool.maturin]
+# uv build -C "build-args=--features=resize"
 profile = "release"
 strip = true
 python-source = "python"
