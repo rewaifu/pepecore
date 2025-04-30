@@ -1,28 +1,67 @@
+use std::ptr;
 use crate::error::Error;
 use pepecore::array::svec::{SVec, Shape};
 use pepecore::enums::ImgData;
 
-fn resize_nearest<T: Copy>(
-    src: &[T],
-    src_width: usize,
-    src_height: usize,
-    channels: usize,
-    dst_width: usize,
-    dst_height: usize,
-) -> Vec<T> {
-    let x_ratio = src_width as f32 / dst_width as f32;
-    let y_ratio = src_height as f32 / dst_height as f32;
-    let mut dst = Vec::with_capacity(dst_width * dst_height * channels);
-
-    for y in 0..dst_height {
-        let yf = (y as f32 * y_ratio).round().clamp(0.0, (src_height - 1) as f32) as usize;
-        for x in 0..dst_width {
-            let xf = (x as f32 * x_ratio).round().clamp(0.0, (src_width - 1) as f32) as usize;
-            let base_idx = (yf * src_width + xf) * channels;
-            for c in 0..channels {
-                dst.push(src[base_idx + c]);
+fn resize_nn_const<T: Copy, const C: usize>(
+    src: *const T,
+    src_w: usize,
+    y_idx: &[usize],
+    x_idx: &[usize],
+    dst_ptr: *mut T,
+) {
+    let mut dst_ptr = dst_ptr;
+    for &sy in y_idx {
+        unsafe {
+            let row_src = src.add(sy * src_w * C);
+            for &sx in x_idx {
+                let pix_src = row_src.add(sx * C);
+                ptr::copy_nonoverlapping(pix_src, dst_ptr, C);
+                dst_ptr = dst_ptr.add(C);
             }
         }
+    }
+}
+
+fn resize_nearest<T: Copy + Default + Send + Sync>(
+    src: &[T],
+    src_w: usize,
+    src_h: usize,
+    channels: usize,
+    dst_w: usize,
+    dst_h: usize,
+) -> Vec<T> {
+    let len = dst_w * dst_h * channels;
+    let mut dst: Vec<T> = Vec::with_capacity(len);
+    
+    let y_idx: Vec<usize> = (0..dst_h)
+        .map(|y| ((y * src_h + dst_h / 2) / dst_h).min(src_h - 1))
+        .collect();
+    
+    let x_idx: Vec<usize> = (0..dst_w)
+        .map(|x| ((x * src_w + dst_w / 2) / dst_w).min(src_w - 1))
+        .collect();
+
+    let dst_ptr = dst.as_mut_ptr();
+
+    match channels {
+        1 => resize_nn_const::<T, 1>(
+            src.as_ptr(), src_w,
+            &y_idx, &x_idx, dst_ptr
+        ),
+        3 => resize_nn_const::<T, 3>(
+            src.as_ptr(), src_w,
+            &y_idx, &x_idx, dst_ptr
+        ),
+        4 => resize_nn_const::<T, 4>(
+            src.as_ptr(), src_w,
+            &y_idx, &x_idx, dst_ptr
+        ),
+        _ => panic!("Unsupported channel count"),
+    }
+    
+    unsafe {
+        dst.set_len(len);
     }
 
     dst
@@ -55,18 +94,19 @@ mod tests {
     fn test_nearest_neighbour() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
 
-        let input_path = PathBuf::from(manifest_dir).join("tests").join("assets").join("test.jpg");
+        let input_path = PathBuf::from(manifest_dir).join("tests").join("assets").join("test.png");
 
-        assert!(
-            input_path.exists(),
-            "Test image not found at {:?}. Please place test.jpg in tests/assets/",
-            input_path
-        );
+        assert!(input_path.exists(), "Test image not found at {:?}", input_path);
 
         let src_img = pepecore::ops::read::read::read_in_path(&input_path, ImgColor::DYNAMIC).expect("Read image failed");
         let (src_height, src_width, _) = src_img.shape();
+
+        let start = std::time::Instant::now();
+
         let dst_size = calculate_dst_size(src_height, src_width, None, None, Some(0.25));
         let dst_img = nearest_neighbour(&src_img, dst_size.0, dst_size.1).expect("Nearest neighbour resize failed");
+
+        println!("Time elapsed: {}µs", start.elapsed().as_micros());
 
         let output_path = PathBuf::from(manifest_dir).join("tests").join("output");
 
