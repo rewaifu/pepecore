@@ -1,9 +1,10 @@
-use crate::utility::svec_to_pyarray;
+use std::path::PathBuf;
+use pyo3::{pyclass, pyfunction, pymodule, wrap_pyfunction, Bound, IntoPyObjectExt, PyAny, PyResult, Python};
+use pyo3::prelude::{PyModule, PyModuleMethods};
 use pepecore::enums::{ImgColor, PixelType};
 use pepecore::ops::read::read::read_in_path;
-use pyo3::IntoPyObjectExt;
-use pyo3::prelude::*;
-use std::path::PathBuf;
+use pepecore::ops::save::save::svec_save;
+use crate::utility::{downcast_pyany_to_svec, svec_to_pyarray};
 
 #[pyclass]
 #[derive(Clone, Copy)]
@@ -41,4 +42,26 @@ pub fn read<'py>(py: Python<'py>, path: String, color_mode: ColorMode) -> PyResu
     }?;
 
     Ok(result.into_bound(py))
+}
+
+#[pyfunction]
+pub fn save<'py>(py: Python<'py>, img: Bound<'py, PyAny>, path: String) -> PyResult<()> {
+    let img = downcast_pyany_to_svec(img)?;
+
+    let path = PathBuf::from(path);
+
+    py.allow_threads(|| svec_save(img, &path).expect("Failed to save image"));
+
+    Ok(())
+}
+
+
+#[pymodule]
+pub fn rw_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    let module = PyModule::new(m.py(), "rw")?;
+    module.add_class::<ColorMode>()?;
+    module.add_function(wrap_pyfunction!(read, m)?)?;
+    module.add_function(wrap_pyfunction!(save, m)?)?;
+    m.add_submodule(&module)?;
+    Ok(())
 }

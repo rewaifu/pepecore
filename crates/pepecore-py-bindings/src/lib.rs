@@ -1,8 +1,7 @@
-mod pyimage;
-mod read;
+#[cfg(feature = "resize")]
 mod resize;
-mod save;
 mod utility;
+mod rw;
 
 use pyo3::prelude::*;
 
@@ -12,10 +11,8 @@ use pyo3::prelude::*;
 #[pymodule]
 fn pepecore(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.setattr("__version__", env!("CARGO_PKG_VERSION"))?;
-    m.add_class::<read::ColorMode>()?;
-    m.add_class::<resize::ResizeInterpolation>()?;
-    m.add_function(wrap_pyfunction!(read::read, m)?)?;
-    m.add_function(wrap_pyfunction!(save::save, m)?)?;
-    m.add_function(wrap_pyfunction!(resize::resize, m)?)?;
+    rw::rw_module(&m)?;
+    #[cfg(feature = "resize")]
+    resize::resize_module(&m)?;
     Ok(())
 }

@@ -1,7 +1,8 @@
 use crate::utility::{downcast_pyany_to_svec, svec_to_pyarray};
 use pepecore::enums::PixelType;
 use pepecore_resize::interpolation::nearest_neighbour;
-use pyo3::{Bound, IntoPyObjectExt, PyAny, PyResult, Python, pyclass, pyfunction};
+use pyo3::{Bound, IntoPyObjectExt, PyAny, PyResult, Python, pyclass, pyfunction, pymodule, wrap_pyfunction};
+use pyo3::prelude::{PyModule, PyModuleMethods};
 
 #[pyclass(eq, eq_int)]
 #[derive(Clone, PartialEq)]
@@ -30,4 +31,13 @@ pub fn resize<'py>(
     }?;
 
     Ok(result.into_bound(py))
+}
+
+#[pymodule]
+pub fn resize_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    let module = PyModule::new(m.py(), "resize")?;
+    module.add_class::<ResizeInterpolation>()?;
+    module.add_function(wrap_pyfunction!(resize, m)?)?;
+    m.add_submodule(&module)?;
+    Ok(())
 }

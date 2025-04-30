@@ -11,5 +11,9 @@ crate-type = ["cdylib"]
 [dependencies]
 numpy = "0.24.0"
 pepecore.workspace = true
-pepecore-resize.workspace = true
-pyo3 = { version = "0.24.2", features = ["extension-module"] }
+pepecore-resize = { workspace = true, optional = true }
+pyo3 = { version = "0.24.2", features = ["extension-module", "abi3-py39"] }
+
+[features]
+default = ["resize"]
+resize = ["dep:pepecore-resize"]
