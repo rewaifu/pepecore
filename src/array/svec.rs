@@ -1,3 +1,6 @@
+use crate::array::type_convert::f32_to::{convert_f32_to_u8_normalized, convert_f32_to_u16_normalized};
+use crate::array::type_convert::u8_to::{convert_u8_to_f32_normalized, convert_u8_to_u16_normalized};
+use crate::array::type_convert::u16_to::{convert_u16_to_f32_normalized, convert_u16_to_u8_normalized};
 use crate::enums::{ImgData, PixelType};
 use crate::errors::SVecError;
 use std::any::TypeId;
@@ -32,7 +35,7 @@ impl From<&[usize]> for Shape {
 
 #[derive(Clone)]
 pub struct SVec {
-    shape: Shape,
+    pub shape: Shape,
     pub data: ImgData,
 }
 
@@ -142,6 +145,46 @@ impl SVec {
             }
         }
     }
+    pub fn as_f32(&mut self) {
+        match &mut self.data {
+            ImgData::U8(_) => convert_u8_to_f32_normalized(self),
+            ImgData::U16(_) => convert_u16_to_f32_normalized(self),
+            ImgData::F32(_) => {}
+        }
+    }
+    pub fn as_u8(&mut self) {
+        match &mut self.data {
+            ImgData::U8(_) => {}
+            ImgData::U16(_) => convert_u16_to_u8_normalized(self),
+            ImgData::F32(_) => convert_f32_to_u8_normalized(self),
+        }
+    }
+    pub fn as_u16(&mut self) {
+        match &mut self.data {
+            ImgData::U8(_) => convert_u8_to_u16_normalized(self),
+            ImgData::U16(_) => {}
+            ImgData::F32(_) => convert_f32_to_u16_normalized(self),
+        }
+    }
+    pub fn truncate(&mut self, new_len: usize) -> Result<(), SVecError> {
+        match &mut self.data {
+            ImgData::U8(data) => {
+                data.truncate(new_len);
+                Ok(())
+            }
+            ImgData::U16(data) => {
+                data.truncate(new_len);
+                Ok(())
+            }
+            ImgData::F32(data) => {
+                data.truncate(new_len);
+                Ok(())
+            }
+        }
+    }
+    pub fn get_mut_ptr<T: 'static>(&mut self) -> Result<*mut T, SVecError> {
+        self.get_data_mut::<T>().map(|slice| slice.as_mut_ptr())
+    }
 }
 
 impl fmt::Debug for SVec {
@@ -226,7 +269,14 @@ mod tests {
             Err(e) => panic!("Ожидали данные типа f32, но получили ошибку: {:?}", e),
         }
     }
-
+    #[test]
+    fn test_u8_to_f32_svec() {
+        let shape = Shape::new(2, 2, Some(1));
+        let data = ImgData::F32(vec![1.0, 2.0, 127.0, 255.0]);
+        let mut svec = SVec::new(shape, data);
+        svec.as_f32();
+        println!("{:?}", svec);
+    }
     #[test]
     fn test_type_mismatch_error() {
         let shape = Shape::new(2, 2, Some(1));
