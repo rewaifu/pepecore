@@ -1,3 +1,26 @@
+//! Module providing halftone and rotated halftone operations on `SVec` images.
+//!
+//! Applies threshold-based dot patterns per channel to simulate printing halftone effects.
+//! Supports different pixel types (`u8`, `u16`, `f32`) and customizable dot sizes, shapes, and rotations.
+//!
+//! # Examples
+//!
+//! ```rust
+//! use pepecore::{halftone, rotate_halftone};
+//! use pepecore::array::svec::SVec;
+//! use pepecore::enums::{DotType, ImgData, PixelType};
+//! use pepecore::svec::Shape;
+//! // Create or load a grayscale SVec (single-channel u8)
+//! let mut img = SVec::new(Shape::new(100, 100, None), ImgData::U8(vec![128; 10000]));
+//! // Apply non-rotated halftone with dot size 5 for the single channel
+//! halftone(&mut img, &[5], &[DotType::CIRCLE]).unwrap();
+//! // Apply rotated halftone on a color image
+//! let mut rgb = SVec::new(Shape::new(50, 50, Some(3)), ImgData::U8(vec![200; 7500]));
+//! let sizes = vec![4, 6, 8];
+//! let angles = vec![15.0, 45.0, 75.0];
+//! let types = vec![DotType::CROSS, DotType::CIRCLE, DotType::ELLIPSE];
+//! rotate_halftone(&mut rgb, &sizes, &angles, &types).unwrap();
+//! ```
 use crate::array::svec::SVec;
 use crate::enums::{DotType, PixelType};
 use crate::errors::HalftoneError;
@@ -6,8 +29,23 @@ use crate::ops::svec_ops::halftone::utils::{HalftonePixel, compute_cos_sin, rota
 use std::fmt::Debug;
 
 /// Apply a standard (non-rotated) halftone to the image.
-/// Returns an error if image data or channels are unavailable
-/// or if `dot_sizes` does not match the number of channels.
+///
+/// Generates per-channel dot matrices using `dot_sizes` and `dot_type`,
+/// then applies thresholding to each pixel: if the pixel value is below the
+/// dot matrix threshold, sets to `MIN_VALUE`, otherwise to `MAX_VALUE`.
+///
+/// # Parameters
+///
+/// - `img`: mutable reference to the `SVec` image.
+/// - `dot_sizes`: array of dot sizes per channel (length must match channel count).
+/// - `dot_type`: array of `DotType` specifying dot shape per channel.
+///
+/// # Errors
+///
+/// Returns `HalftoneError` if:
+/// - Unable to access image data or channels.
+/// - `dot_sizes` or `dot_type` length is smaller than channel count.
+///
 fn apply_halftone<T>(img: &mut SVec, dot_sizes: &[usize], dot_type: &[DotType]) -> Result<(), HalftoneError>
 where
     T: HalftonePixel + Debug,
@@ -73,7 +111,22 @@ where
 }
 
 /// Apply a rotated halftone to the image.
-/// Additional `angles` array provides rotation per channel in degrees.
+///
+/// Similar to `apply_halftone`, but first rotates each pixel coordinate by
+/// the angle specified in `angles` (degrees) around image center, producing
+/// rotated dot alignment.
+///
+/// # Parameters
+///
+/// - `img`: mutable reference to the `SVec`.
+/// - `dot_sizes`: array of dot sizes per channel.
+/// - `angles`: array of rotation angles in degrees per channel.
+/// - `dot_type`: array of `DotType` per channel.
+///
+/// # Errors
+///
+/// Returns `HalftoneError` on data access failures or mismatched array lengths.
+///
 fn apply_rotate_halftone<T>(
     img: &mut SVec,
     dot_sizes: &[usize],
@@ -146,7 +199,10 @@ where
     Ok(())
 }
 
-/// Public API: apply standard halftone
+/// Apply non-rotated halftone to `img` dispatching by pixel type.
+///
+/// # See
+/// - `apply_halftone` for detailed behavior.
 pub fn halftone(img: &mut SVec, dot_sizes: &[usize], dot_type: &[DotType]) -> Result<(), HalftoneError> {
     match img.pixel_type() {
         PixelType::F32 => apply_halftone::<f32>(img, dot_sizes, dot_type),
@@ -155,7 +211,10 @@ pub fn halftone(img: &mut SVec, dot_sizes: &[usize], dot_type: &[DotType]) -> Re
     }
 }
 
-/// Public API: apply rotated halftone
+/// Apply rotated halftone to `img` dispatching by pixel type.
+///
+/// # See
+/// - `apply_rotate_halftone` for detailed behavior.
 pub fn rotate_halftone(img: &mut SVec, dot_sizes: &[usize], angles: &[f32], dot_type: &[DotType]) -> Result<(), HalftoneError> {
     match img.pixel_type() {
         PixelType::F32 => apply_rotate_halftone::<f32>(img, dot_sizes, angles, dot_type),

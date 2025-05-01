@@ -1,3 +1,8 @@
+//! Module for decoding image buffers (PSD and common formats) into SVec structures.
+//!
+//! This module provides functions to decode raw bytes of PSD files as well as other image formats
+//! into `SVec`, using different channel configurations (gray, rgb, rgba, gray+a) and dynamic
+//! data types (U8, U16, F32).
 use std::io::Cursor;
 
 use crate::array::svec::{SVec, Shape};
@@ -7,7 +12,18 @@ use crate::errors::DecodeError::{ImgDecodingError, PsdDecodingError};
 use image::DynamicImage;
 use zune_core::bytestream::ZCursor;
 use zune_psd::PSDDecoder;
-
+/// Decode raw size information from PSD header bytes.
+///
+/// Reads a slice of 8 bytes (offset within PSD header) and returns
+/// the (height, width) as u32 values.
+///
+/// # Parameters
+///
+/// - `bytes`: 8-byte slice from PSD header containing size info.
+///
+/// # Returns
+///
+/// A tuple `(height, width)` of the PSD canvas.
 fn decode_size_psd(bytes: &[u8]) -> (u32, u32) {
     let mut height: u32 = 0;
     let mut width: u32 = 0;
@@ -19,6 +35,18 @@ fn decode_size_psd(bytes: &[u8]) -> (u32, u32) {
     width += if bytes[5] > 0 { bytes[5] as u32 * 256 * 256 } else { 0 };
     (height, width)
 }
+/// Decode PSD buffer into a dynamic integer SVec (packed channels).
+///
+/// Produces `ImgData::U8` or `ImgData::U16` based on bit depth, preserving original
+/// channel layout.
+///
+/// # Parameters
+///
+/// - `buffer`: PSD file content as byte slice.
+///
+/// # Errors
+///
+/// Returns `PsdDecodingError` if PSD decoding fails or channel count is unexpected.
 pub fn psd_din_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let size_bites: &[u8] = &buffer[14..22];
     let channels = if buffer[13] > 1 { Some(buffer[13] as usize) } else { None };
@@ -47,6 +75,9 @@ pub fn psd_din_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
         SVec::new(Shape::new(height as usize, width as usize, channels), ImgData::U8(px))
     })
 }
+/// Decode PSD buffer into RGB SVec.
+///
+/// Converts grayscale PSDs to RGB by replicating channels, preserves alpha if present.
 pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let size_bites: &[u8] = &buffer[14..22];
     let channels = buffer[13];
@@ -105,6 +136,9 @@ pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
         },
     ))
 }
+/// Decode PSD buffer into RGBA SVec, adding full alpha channel.
+///
+/// Always outputs 4 channels, setting alpha to max value if missing.
 pub fn psd_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let size_bites: &[u8] = &buffer[14..22];
     let channels = buffer[13];
@@ -175,6 +209,9 @@ pub fn psd_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
         },
     ))
 }
+/// Decode PSD buffer to grayscale SVec, converting RGB using BT.709.
+///
+/// Produces a single-channel image.
 pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let size_bites: &[u8] = &buffer[14..22];
     let channels = buffer[13];
@@ -247,6 +284,9 @@ pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
         },
     ))
 }
+/// Decode PSD buffer to grayscale with alpha SVec.
+///
+/// Outputs two channels: brightness and full alpha
 pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let size_bites: &[u8] = &buffer[14..22];
     let channels = buffer[13];
@@ -322,6 +362,10 @@ pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
         },
     ))
 }
+
+/// Decode common image buffer into dynamic SVec (all color modes).
+///
+/// Uses `image` crate to detect format and return proper channel count.
 pub fn img_din_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let img = image::ImageReader::new(Cursor::new(buffer))
         .with_guessed_format()

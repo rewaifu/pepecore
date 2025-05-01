@@ -1,72 +1,68 @@
-use crate::array::svec::{SVec, Shape};
+//! Module for color space conversions on `SVec` images.
+//!
+//! Provides a single function `cvt_color` that applies various color transformations
+//! (e.g., RGB⇄Gray, RGB⇄YCbCr, RGB⇄CMYK, channel swaps) on an `SVec` in-place, supporting
+//! different pixel types (u8, u16, f32).
+//!
+//! # Examples
+//!
+//! ```rust
+//! use pepecore::cvt_color::cvt_color;
+//! use pepecore::array::svec::SVec;
+//! use pepecore::enums::{CVTColor, PixelType, ImgData};
+//! use pepecore::svec::Shape;
+//!
+//! // Create an example SVec with 3-channel u8 data
+//! let mut svec = SVec::new(Shape::new(2, 2, Some(3)), ImgData::U8(vec![255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 0]));
+//! // Convert RGB to grayscale using the BT.601 standard
+//! cvt_color(&mut svec, CVTColor::RGB2Gray_601);
+//! assert_eq!(svec.pixel_type(), PixelType::U8);
+//! assert!(svec.shape.get_channels().is_none()); // now single-channel
+//! ```
+use crate::array::svec::SVec;
 use crate::enums::{CVTColor, PixelType};
-use crate::ops::cvtcolor::constants::*;
-use crate::ops::cvtcolor::cvt_f32::*;
-use crate::ops::cvtcolor::cvt_u8::*;
-use crate::ops::cvtcolor::cvt_u16::*;
-fn rgb_to_bgr(img: &mut SVec) {
-    let len = img.get_len();
-    let img_c = img.shape.get_channels();
-    assert_eq!(img_c, Some(3));
-    match img.pixel_type() {
-        PixelType::F32 => {
-            let ptr: *mut f32 = img.get_mut_ptr::<f32>().unwrap();
-            unsafe {
-                for i in (0..len).step_by(3) {
-                    let a = ptr.add(i);
-                    let c = ptr.add(i + 2);
-                    std::ptr::swap(a, c);
-                }
-            }
-        }
-        PixelType::U8 => {
-            let ptr: *mut u8 = img.get_mut_ptr::<u8>().unwrap();
-            unsafe {
-                for i in (0..len).step_by(3) {
-                    let a = ptr.add(i);
-                    let c = ptr.add(i + 2);
-                    std::ptr::swap(a, c);
-                }
-            }
-        }
-        PixelType::U16 => {
-            let ptr: *mut u16 = img.get_mut_ptr::<u16>().unwrap();
-            unsafe {
-                for i in (0..len).step_by(3) {
-                    let a = ptr.add(i);
-                    let c = ptr.add(i + 2);
-                    std::ptr::swap(a, c);
-                }
-            }
-        }
-    }
-}
-fn gray_to_rgb(img: &mut SVec) {
-    let (h, w, c) = img.shape();
-    assert_eq!(c, None);
-    img.shape = Shape::new(h, w, Some(3));
-    match img.pixel_type() {
-        PixelType::U8 => {
-            let vec_img = img.get_mut_vec::<u8>().unwrap();
-            for index in 0..h * w {
-                vec_img.extend([vec_img[index], vec_img[index], vec_img[index]]);
-            }
-        }
-        PixelType::F32 => {
-            let vec_img = img.get_mut_vec::<f32>().unwrap();
-            for index in 0..h * w {
-                vec_img.extend([vec_img[index], vec_img[index], vec_img[index]]);
-            }
-        }
-        PixelType::U16 => {
-            let vec_img = img.get_mut_vec::<u16>().unwrap();
-            for index in 0..h * w {
-                vec_img.extend([vec_img[index], vec_img[index], vec_img[index]]);
-            }
-        }
-    }
-    img.drain(0..h * w).unwrap()
-}
+use crate::ops::svec_ops::cvtcolor::constants::*;
+use crate::ops::svec_ops::cvtcolor::cvt::{gray_to_rgb, rgb_to_bgr};
+use crate::ops::svec_ops::cvtcolor::cvt_f32::*;
+use crate::ops::svec_ops::cvtcolor::cvt_u8::*;
+use crate::ops::svec_ops::cvtcolor::cvt_u16::*;
+
+/// Convert color space of `SVec` in-place according to `cvt_type`.
+///
+/// Dispatches based on pixel type (`PixelType::F32`, `U8`, `U16`) and applies
+/// the selected conversion:
+///
+/// - **RGB → Gray** (BT.601, BT.709, BT.2020)
+/// - **RGB → YCbCr** (BT.601, BT.709, BT.2020)
+/// - **YCbCr → RGB** (BT.601, BT.709, BT.2020)
+/// - **RGB ⇄ CMYK**
+/// - **RGB ⇄ BGR** (channel swap)
+/// - **Gray → RGB** (replicate channel)
+///
+/// # Parameters
+///
+/// - `img`: mutable reference to an `SVec` containing image data.
+/// - `cvt_type`: variant of `CVTColor` specifying the desired conversion.
+///
+/// # Panics
+///
+/// Panics if the `SVec` channel count is not compatible with the chosen conversion
+/// (e.g., `RGB2Gray` on non-3-channel image).
+///
+/// # Examples
+///
+/// ```rust
+/// use pepecore::cvt_color::cvt_color;
+/// use pepecore::array::svec::SVec;
+/// use pepecore::enums::{CVTColor, PixelType, ImgData};
+/// use pepecore::svec::Shape;
+///
+/// // 1x1 pixel RGB f32
+/// let mut svec = SVec::new(Shape::new(1, 1, Some(3)), ImgData::F32(vec![0.5, 0.2, 0.7]));
+/// cvt_color(&mut svec, CVTColor::RGB2YCbCR_709);
+/// assert_eq!(svec.pixel_type(), PixelType::F32);
+/// assert_eq!(svec.shape.get_ndims(), 3);
+/// ```
 pub fn cvt_color(img: &mut SVec, cvt_type: CVTColor) {
     match img.pixel_type() {
         PixelType::F32 => match cvt_type {
