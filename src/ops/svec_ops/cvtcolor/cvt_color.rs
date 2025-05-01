@@ -8,9 +8,8 @@
 //!
 //! ```rust
 //! use pepecore::cvt_color::cvt_color;
-//! use pepecore::array::svec::SVec;
-//! use pepecore::enums::{CVTColor, PixelType, ImgData};
-//! use pepecore::svec::Shape;
+//! use pepecore_array::{SVec,Shape,PixelType,ImgData};
+//! use pepecore::enums::{CVTColor};
 //!
 //! // Create an example SVec with 3-channel u8 data
 //! let mut svec = SVec::new(Shape::new(2, 2, Some(3)), ImgData::U8(vec![255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 0]));
@@ -19,13 +18,13 @@
 //! assert_eq!(svec.pixel_type(), PixelType::U8);
 //! assert!(svec.shape.get_channels().is_none()); // now single-channel
 //! ```
-use crate::array::svec::SVec;
-use crate::enums::{CVTColor, PixelType};
+use crate::enums::CVTColor;
 use crate::ops::svec_ops::cvtcolor::constants::*;
 use crate::ops::svec_ops::cvtcolor::cvt::{gray_to_rgb, rgb_to_bgr};
 use crate::ops::svec_ops::cvtcolor::cvt_f32::*;
 use crate::ops::svec_ops::cvtcolor::cvt_u8::*;
 use crate::ops::svec_ops::cvtcolor::cvt_u16::*;
+use pepecore_array::{PixelType, SVec};
 
 /// Convert color space of `SVec` in-place according to `cvt_type`.
 ///
@@ -53,9 +52,8 @@ use crate::ops::svec_ops::cvtcolor::cvt_u16::*;
 ///
 /// ```rust
 /// use pepecore::cvt_color::cvt_color;
-/// use pepecore::array::svec::SVec;
-/// use pepecore::enums::{CVTColor, PixelType, ImgData};
-/// use pepecore::svec::Shape;
+/// use pepecore_array::{SVec,Shape,PixelType,ImgData};
+/// use pepecore::enums::{CVTColor};
 ///
 /// // 1x1 pixel RGB f32
 /// let mut svec = SVec::new(Shape::new(1, 1, Some(3)), ImgData::F32(vec![0.5, 0.2, 0.7]));

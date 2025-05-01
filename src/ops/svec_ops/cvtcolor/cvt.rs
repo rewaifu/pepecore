@@ -1,5 +1,4 @@
-use crate::enums::PixelType;
-use crate::svec::{SVec, Shape};
+use pepecore_array::{PixelType, SVec, Shape};
 
 pub fn rgb_to_bgr(img: &mut SVec) {
     let len = img.get_len();

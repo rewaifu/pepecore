@@ -1,5 +1,4 @@
-use crate::array::svec::SVec;
-use crate::enums::ImgData;
+use crate::{ImgData, SVec};
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 #[target_feature(enable = "avx2")]
@@ -122,8 +121,7 @@ pub fn convert_f32_to_u16_normalized(input: &mut SVec) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::array::svec::Shape;
-    use crate::enums::ImgData;
+    use crate::{ImgData, Shape};
 
     #[test]
     fn f32_to_u16_test() {

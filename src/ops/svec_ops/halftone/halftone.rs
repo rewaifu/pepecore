@@ -7,9 +7,8 @@
 //!
 //! ```rust
 //! use pepecore::{halftone, rotate_halftone};
-//! use pepecore::array::svec::SVec;
-//! use pepecore::enums::{DotType, ImgData, PixelType};
-//! use pepecore::svec::Shape;
+//! use pepecore_array::{SVec,Shape,PixelType,ImgData};
+//! use pepecore::enums::{DotType};
 //! // Create or load a grayscale SVec (single-channel u8)
 //! let mut img = SVec::new(Shape::new(100, 100, None), ImgData::U8(vec![128; 10000]));
 //! // Apply non-rotated halftone with dot size 5 for the single channel
@@ -21,11 +20,11 @@
 //! let types = vec![DotType::CROSS, DotType::CIRCLE, DotType::ELLIPSE];
 //! rotate_halftone(&mut rgb, &sizes, &angles, &types).unwrap();
 //! ```
-use crate::array::svec::SVec;
-use crate::enums::{DotType, PixelType};
+use crate::enums::DotType;
 use crate::errors::HalftoneError;
 use crate::ops::svec_ops::halftone::dot::dot_create;
 use crate::ops::svec_ops::halftone::utils::{HalftonePixel, compute_cos_sin, rotate_pixel_coordinates};
+use pepecore_array::{PixelType, SVec};
 use std::fmt::Debug;
 
 /// Apply a standard (non-rotated) halftone to the image.

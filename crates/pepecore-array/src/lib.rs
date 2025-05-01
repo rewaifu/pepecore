@@ -1,8 +1,10 @@
-use crate::array::type_convert::f32_to::{convert_f32_to_u8_normalized, convert_f32_to_u16_normalized};
-use crate::array::type_convert::u8_to::{convert_u8_to_f32_normalized, convert_u8_to_u16_normalized};
-use crate::array::type_convert::u16_to::{convert_u16_to_f32_normalized, convert_u16_to_u8_normalized};
-use crate::enums::{ImgData, PixelType};
-use crate::errors::SVecError;
+mod error;
+mod type_convert;
+
+use crate::error::Error;
+use crate::type_convert::f32_to::{convert_f32_to_u8_normalized, convert_f32_to_u16_normalized};
+use crate::type_convert::u8_to::{convert_u8_to_f32_normalized, convert_u8_to_u16_normalized};
+use crate::type_convert::u16_to::{convert_u16_to_f32_normalized, convert_u16_to_u8_normalized};
 use std::any::TypeId;
 use std::fmt;
 use std::ops::Range;
@@ -13,6 +15,31 @@ pub struct Shape {
     width: usize,
     channels: Option<usize>,
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PixelType {
+    U8,
+    U16,
+    F32,
+}
+
+#[derive(Clone, Debug)]
+pub enum ImgData {
+    F32(Vec<f32>),
+    U8(Vec<u8>),
+    U16(Vec<u16>),
+}
+
+impl ImgData {
+    pub fn pixel_type(&self) -> PixelType {
+        match self {
+            ImgData::U8(_) => PixelType::U8,
+            ImgData::U16(_) => PixelType::U16,
+            ImgData::F32(_) => PixelType::F32,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct SVec {
     pub shape: Shape,
@@ -51,13 +78,13 @@ impl SVec {
         shape.0 * shape.1 * shape.2.unwrap_or(1)
     }
 
-    pub fn get_data<T: 'static>(&self) -> Result<&[T], SVecError> {
+    pub fn get_data<T: 'static>(&self) -> Result<&[T], Error> {
         match &self.data {
             ImgData::U8(data) => {
                 if TypeId::of::<T>() == TypeId::of::<u8>() {
                     Ok(unsafe { std::mem::transmute::<&[u8], &[T]>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "u8",
                         actual: std::any::type_name::<T>(),
                     })
@@ -67,7 +94,7 @@ impl SVec {
                 if TypeId::of::<T>() == TypeId::of::<u16>() {
                     Ok(unsafe { std::mem::transmute::<&[u16], &[T]>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "u16",
                         actual: std::any::type_name::<T>(),
                     })
@@ -77,7 +104,7 @@ impl SVec {
                 if TypeId::of::<T>() == TypeId::of::<f32>() {
                     Ok(unsafe { std::mem::transmute::<&[f32], &[T]>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "f32",
                         actual: std::any::type_name::<T>(),
                     })
@@ -88,13 +115,13 @@ impl SVec {
     pub fn pixel_type(&self) -> PixelType {
         self.data.pixel_type()
     }
-    pub fn get_data_mut<T: 'static>(&mut self) -> Result<&mut [T], SVecError> {
+    pub fn get_data_mut<T: 'static>(&mut self) -> Result<&mut [T], Error> {
         match &mut self.data {
             ImgData::U8(data) => {
                 if TypeId::of::<T>() == TypeId::of::<u8>() {
                     Ok(unsafe { std::mem::transmute::<&mut [u8], &mut [T]>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "u8",
                         actual: std::any::type_name::<T>(),
                     })
@@ -104,7 +131,7 @@ impl SVec {
                 if TypeId::of::<T>() == TypeId::of::<u16>() {
                     Ok(unsafe { std::mem::transmute::<&mut [u16], &mut [T]>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "u16",
                         actual: std::any::type_name::<T>(),
                     })
@@ -114,7 +141,7 @@ impl SVec {
                 if TypeId::of::<T>() == TypeId::of::<f32>() {
                     Ok(unsafe { std::mem::transmute::<&mut [f32], &mut [T]>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "f32",
                         actual: std::any::type_name::<T>(),
                     })
@@ -143,7 +170,7 @@ impl SVec {
             ImgData::F32(_) => convert_f32_to_u16_normalized(self),
         }
     }
-    pub fn truncate(&mut self, new_len: usize) -> Result<(), SVecError> {
+    pub fn truncate(&mut self, new_len: usize) -> Result<(), Error> {
         match &mut self.data {
             ImgData::U8(data) => {
                 data.truncate(new_len);
@@ -159,7 +186,7 @@ impl SVec {
             }
         }
     }
-    pub fn drain(&mut self, new_len: Range<usize>) -> Result<(), SVecError> {
+    pub fn drain(&mut self, new_len: Range<usize>) -> Result<(), Error> {
         match &mut self.data {
             ImgData::U8(data) => {
                 data.drain(new_len);
@@ -175,13 +202,13 @@ impl SVec {
             }
         }
     }
-    pub fn get_mut_vec<T: 'static>(&mut self) -> Result<&mut Vec<T>, SVecError> {
+    pub fn get_mut_vec<T: 'static>(&mut self) -> Result<&mut Vec<T>, Error> {
         match &mut self.data {
             ImgData::U8(data) => {
                 if TypeId::of::<T>() == TypeId::of::<u8>() {
                     Ok(unsafe { std::mem::transmute::<&mut Vec<u8>, &mut Vec<T>>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "u8",
                         actual: std::any::type_name::<T>(),
                     })
@@ -191,7 +218,7 @@ impl SVec {
                 if TypeId::of::<T>() == TypeId::of::<u16>() {
                     Ok(unsafe { std::mem::transmute::<&mut Vec<u16>, &mut Vec<T>>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "u16",
                         actual: std::any::type_name::<T>(),
                     })
@@ -201,7 +228,7 @@ impl SVec {
                 if TypeId::of::<T>() == TypeId::of::<f32>() {
                     Ok(unsafe { std::mem::transmute::<&mut Vec<f32>, &mut Vec<T>>(data) })
                 } else {
-                    Err(SVecError::TypeMismatch {
+                    Err(Error::TypeMismatch {
                         expected: "f32",
                         actual: std::any::type_name::<T>(),
                     })
@@ -209,7 +236,7 @@ impl SVec {
             }
         }
     }
-    pub fn get_mut_ptr<T: 'static>(&mut self) -> Result<*mut T, SVecError> {
+    pub fn get_mut_ptr<T: 'static>(&mut self) -> Result<*mut T, Error> {
         self.get_data_mut::<T>().map(|slice| slice.as_mut_ptr())
     }
 }
@@ -297,7 +324,7 @@ mod tests {
         let result = svec.get_data::<u16>();
         // println!("{:?}",result);
         match result {
-            Err(SVecError::TypeMismatch { expected, actual }) => {
+            Err(Error::TypeMismatch { expected, actual }) => {
                 assert_eq!(expected, "u8");
                 assert_eq!(actual, "u16");
             }

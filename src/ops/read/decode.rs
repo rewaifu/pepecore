@@ -5,11 +5,10 @@
 //! data types (U8, U16, F32).
 use std::io::Cursor;
 
-use crate::array::svec::{SVec, Shape};
-use crate::enums::ImgData;
 use crate::errors::DecodeError;
 use crate::errors::DecodeError::{ImgDecodingError, PsdDecodingError};
 use image::DynamicImage;
+use pepecore_array::{ImgData, SVec, Shape};
 use zune_core::bytestream::ZCursor;
 use zune_psd::PSDDecoder;
 /// Decode raw size information from PSD header bytes.
