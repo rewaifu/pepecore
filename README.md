@@ -18,6 +18,7 @@ Add PepeCore to your `Cargo.toml`:
 
 ```toml
 [dependencies]
+pepecore-array = "0.1"
 pepecore = "0.1"
 ```
 
@@ -25,7 +26,8 @@ Then in your crate:
 
 ```rust
 extern crate pepecore;
-use pepecore::{svec::SVec, read::read_in_path, save::svec_save};
+use pepecore_array::SVec;
+use pepecore::{read::read_in_path, save::svec_save};
 use pepecore::{cvt_color, halftone, screentone};
 use pepecore::enums::{ImgColor, CVTColor, DotType};
 ```
@@ -33,8 +35,8 @@ use pepecore::enums::{ImgColor, CVTColor, DotType};
 ## Quick Start
 
 ```rust
+use pepecore_array::SVec;
 use pepecore::{
-    svec::SVec,
     read::read_in_path,
     save::svec_save,
     cvt_color,
