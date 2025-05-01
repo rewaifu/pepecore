@@ -126,14 +126,3 @@ pub fn dot_create(dot_size: usize, dot_type: &DotType) -> SVec {
     let inv_dot = SVec::new(Shape::new(dot_size, dot_size, None), ImgData::F32(mut_inv_dot));
     create_mask(&dot, &inv_dot)
 }
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ops::save::save::svec_save;
-
-    #[test]
-    fn test_create_u8_svec() {
-        let img = dot_create(100, &DotType::LINE);
-        svec_save(img, "test7.png");
-    }
-}

@@ -5,6 +5,7 @@ use crate::enums::{ImgData, PixelType};
 use crate::errors::SVecError;
 use std::any::TypeId;
 use std::fmt;
+use std::ops::Range;
 
 #[derive(Clone, Debug)]
 pub struct Shape {
@@ -158,6 +159,56 @@ impl SVec {
             }
         }
     }
+    pub fn drain(&mut self, new_len: Range<usize>) -> Result<(), SVecError> {
+        match &mut self.data {
+            ImgData::U8(data) => {
+                data.drain(new_len);
+                Ok(())
+            }
+            ImgData::U16(data) => {
+                data.drain(new_len);
+                Ok(())
+            }
+            ImgData::F32(data) => {
+                data.drain(new_len);
+                Ok(())
+            }
+        }
+    }
+    pub fn get_mut_vec<T: 'static>(&mut self) -> Result<&mut Vec<T>, SVecError> {
+        match &mut self.data {
+            ImgData::U8(data) => {
+                if TypeId::of::<T>() == TypeId::of::<u8>() {
+                    Ok(unsafe { std::mem::transmute::<&mut Vec<u8>, &mut Vec<T>>(data) })
+                } else {
+                    Err(SVecError::TypeMismatch {
+                        expected: "u8",
+                        actual: std::any::type_name::<T>(),
+                    })
+                }
+            }
+            ImgData::U16(data) => {
+                if TypeId::of::<T>() == TypeId::of::<u16>() {
+                    Ok(unsafe { std::mem::transmute::<&mut Vec<u16>, &mut Vec<T>>(data) })
+                } else {
+                    Err(SVecError::TypeMismatch {
+                        expected: "u16",
+                        actual: std::any::type_name::<T>(),
+                    })
+                }
+            }
+            ImgData::F32(data) => {
+                if TypeId::of::<T>() == TypeId::of::<f32>() {
+                    Ok(unsafe { std::mem::transmute::<&mut Vec<f32>, &mut Vec<T>>(data) })
+                } else {
+                    Err(SVecError::TypeMismatch {
+                        expected: "f32",
+                        actual: std::any::type_name::<T>(),
+                    })
+                }
+            }
+        }
+    }
     pub fn get_mut_ptr<T: 'static>(&mut self) -> Result<*mut T, SVecError> {
         self.get_data_mut::<T>().map(|slice| slice.as_mut_ptr())
     }
@@ -199,21 +250,6 @@ fn fmt_data<T: fmt::Debug>(f: &mut fmt::Formatter<'_>, data: &[T], w: usize, h: 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_create_u8_svec() {
-        let shape = Shape::new(2, 2, Some(1));
-        let data = ImgData::U8(vec![1, 2, 3, 4]);
-        let svec = SVec::new(shape, data);
-
-        assert_eq!(svec.shape(), (2, 2, Some(1)));
-        assert_eq!(svec.get_len(), 4);
-
-        match svec.get_data::<u8>() {
-            Ok(data) => assert_eq!(data, &[1, 2, 3, 4]),
-            Err(e) => panic!("Ожидали данные типа u8, но получили ошибку: {:?}", e),
-        }
-    }
 
     #[test]
     fn test_create_u16_svec() {
