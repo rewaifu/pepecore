@@ -53,3 +53,14 @@ impl ImgData {
         }
     }
 }
+impl From<Vec<u8>> for ImgData {
+    fn from(v: Vec<u8>) -> Self { ImgData::U8(v) }
+}
+
+impl From<Vec<u16>> for ImgData {
+    fn from(v: Vec<u16>) -> Self { ImgData::U16(v) }
+}
+
+impl From<Vec<f32>> for ImgData {
+    fn from(v: Vec<f32>) -> Self { ImgData::F32(v) }
+}
