@@ -8,7 +8,7 @@ readme = "README.md"
 authors = ["rewaifu"]
 description = "A Rust library for image decoding, encoding, and processing using an efficient SVec data structure."
 homepage = ""
-documentation = ""
+documentation = "https://docs.rs/crate/pepecore"
 categories = ["multimedia::images"]
 keywords = ["halftone","screentone","cvt_color"]
 
