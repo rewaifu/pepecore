@@ -22,7 +22,7 @@
 use crate::array::svec::SVec;
 use crate::enums::{CVTColor, PixelType};
 use crate::ops::svec_ops::cvtcolor::constants::*;
-use crate::ops::svec_ops::cvtcolor::cvt::{gray_to_rgb, rgb_to_bgr};
+use crate::ops::svec_ops::cvtcolor::cvt::{gray_to_rgb, rgb_to_bayer_2x2, rgb_to_bgr};
 use crate::ops::svec_ops::cvtcolor::cvt_f32::*;
 use crate::ops::svec_ops::cvtcolor::cvt_u8::*;
 use crate::ops::svec_ops::cvtcolor::cvt_u16::*;
@@ -80,6 +80,10 @@ pub fn cvt_color(img: &mut SVec, cvt_type: CVTColor) {
             CVTColor::BGR2RGB => rgb_to_bgr(img),
             CVTColor::RGB2BGR => rgb_to_bgr(img),
             CVTColor::Gray2RGB => gray_to_rgb(img),
+            CVTColor::RGB2Bayer_BGGR => rgb_to_bayer_2x2(img, [2, 1, 1, 0]),
+            CVTColor::RGB2Bayer_RGGB => rgb_to_bayer_2x2(img, [0, 1, 1, 2]),
+            CVTColor::RGB2Bayer_GBRG => rgb_to_bayer_2x2(img, [1, 2, 0, 1]),
+            CVTColor::RGB2Bayer_GRBG => rgb_to_bayer_2x2(img, [1, 0, 2, 1]),
         },
         PixelType::U8 => match cvt_type {
             CVTColor::RGB2Gray_601 => rgb_to_gray_u8(img, KR_601, KG_601, KB_601),
@@ -96,6 +100,10 @@ pub fn cvt_color(img: &mut SVec, cvt_type: CVTColor) {
             CVTColor::BGR2RGB => rgb_to_bgr(img),
             CVTColor::RGB2BGR => rgb_to_bgr(img),
             CVTColor::Gray2RGB => gray_to_rgb(img),
+            CVTColor::RGB2Bayer_BGGR => rgb_to_bayer_2x2(img, [2, 1, 1, 0]),
+            CVTColor::RGB2Bayer_RGGB => rgb_to_bayer_2x2(img, [0, 1, 1, 2]),
+            CVTColor::RGB2Bayer_GBRG => rgb_to_bayer_2x2(img, [1, 2, 0, 1]),
+            CVTColor::RGB2Bayer_GRBG => rgb_to_bayer_2x2(img, [1, 0, 2, 1]),
         },
         PixelType::U16 => match cvt_type {
             CVTColor::RGB2Gray_601 => rgb_to_gray_u16(img, KR_601, KG_601, KB_601),
@@ -112,6 +120,10 @@ pub fn cvt_color(img: &mut SVec, cvt_type: CVTColor) {
             CVTColor::BGR2RGB => rgb_to_bgr(img),
             CVTColor::RGB2BGR => rgb_to_bgr(img),
             CVTColor::Gray2RGB => gray_to_rgb(img),
+            CVTColor::RGB2Bayer_BGGR => rgb_to_bayer_2x2(img, [2, 1, 1, 0]),
+            CVTColor::RGB2Bayer_RGGB => rgb_to_bayer_2x2(img, [0, 1, 1, 2]),
+            CVTColor::RGB2Bayer_GBRG => rgb_to_bayer_2x2(img, [1, 2, 0, 1]),
+            CVTColor::RGB2Bayer_GRBG => rgb_to_bayer_2x2(img, [1, 0, 2, 1]),
         },
     }
 }
