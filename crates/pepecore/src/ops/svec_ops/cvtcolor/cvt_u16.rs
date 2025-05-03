@@ -1,5 +1,4 @@
-use crate::array::svec::{SVec, Shape};
-use crate::enums::ImgData;
+use pepecore_array::{ImgData, SVec, Shape};
 use std::ops::Mul;
 
 pub fn rgb_to_gray_u16(img: &mut SVec, r: f32, g: f32, b: f32) {

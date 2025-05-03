@@ -11,8 +11,8 @@
 //! # Usage Example
 //!
 //! ```rust
+//! use pepecore_array::SVec;
 //! use pepecore::{
-//!     svec::SVec,
 //!     read,
 //!     save,
 //!     cvt_color,
@@ -39,13 +39,11 @@
 //! save::svec_save(img, "output.png").unwrap();
 //! ```
 
-pub mod array;
 pub mod enums;
 pub mod errors;
 pub mod ops;
 
 // Re-export common types and functions
-pub use array::svec;
 pub use ops::read::read;
 pub use ops::save::save;
 

@@ -7,9 +7,8 @@
 //!
 //! ```rust
 //! use pepecore::{halftone, rotate_halftone};
-//! use pepecore::array::svec::SVec;
-//! use pepecore::enums::{DotType, ImgData, PixelType};
-//! use pepecore::svec::Shape;
+//! use pepecore_array::{SVec,Shape,PixelType,ImgData};
+//! use pepecore::enums::{DotType};
 //! // Create or load a grayscale SVec (single-channel u8)
 //! let mut img = SVec::new(Shape::new(100, 100, None), ImgData::U8(vec![128; 10000]));
 //! // Apply non-rotated halftone with dot size 5 for the single channel
@@ -21,11 +20,11 @@
 //! let types = vec![DotType::CROSS, DotType::CIRCLE, DotType::ELLIPSE];
 //! rotate_halftone(&mut rgb, &sizes, &angles, &types).unwrap();
 //! ```
-use crate::array::svec::SVec;
-use crate::enums::{DotType, PixelType};
+use crate::enums::DotType;
 use crate::errors::HalftoneError;
 use crate::ops::svec_ops::halftone::dot::dot_create;
 use crate::ops::svec_ops::halftone::utils::{HalftonePixel, compute_cos_sin, rotate_pixel_coordinates};
+use pepecore_array::{PixelType, SVec};
 use std::fmt::Debug;
 
 /// Apply a standard (non-rotated) halftone to the image.
@@ -53,9 +52,8 @@ where
     // Retrieve image shape and data buffer
     let (height, width, channels_opt) = img.shape();
     let data = img
-        .get_data_mut::<T>()
-        .map_err(|e| HalftoneError::GetDataError(format!("{:?}", e)))?;
-    let channels = channels_opt.ok_or(HalftoneError::NoChannelsError)?;
+        .get_data_mut::<T>()?;
+    let channels = channels_opt.ok_or(pepecore_array::error::Error::NoChannelsError)?;
 
     // Ensure that dot_sizes matches number of channels
     if dot_sizes.len() < channels || dot_type.len() < channels {
@@ -74,8 +72,7 @@ where
         let matrix = if size > 0 {
             let kernel = dot_create(size, &dot_type[index]);
             let kernel_data = kernel
-                .get_data::<f32>()
-                .map_err(|e| HalftoneError::GetDataError(format!("{:?}", e)))?;
+                .get_data::<f32>()?;
             T::prepare_dot_matrix(kernel_data)
         } else {
             Vec::new()
@@ -139,9 +136,8 @@ where
     // Retrieve image shape and data buffer
     let (height, width, channels_opt) = img.shape();
     let data = img
-        .get_data_mut::<T>()
-        .map_err(|e| HalftoneError::GetDataError(format!("{:?}", e)))?;
-    let channels = channels_opt.ok_or(HalftoneError::NoChannelsError)?;
+        .get_data_mut::<T>()?;
+    let channels = channels_opt.ok_or(pepecore_array::error::Error::NoChannelsError)?;
 
     // Ensure dot_sizes and angles arrays match number of channels
     if dot_sizes.len() < channels || angles.len() < channels || dot_type.len() < channels {
@@ -161,8 +157,7 @@ where
         let matrix = if size > 0 {
             let kernel = dot_create(size, &dot_type[i]);
             let kernel_data = kernel
-                .get_data::<f32>()
-                .map_err(|e| HalftoneError::GetDataError(format!("{:?}", e)))?;
+                .get_data::<f32>()?;
             T::prepare_dot_matrix(kernel_data)
         } else {
             Vec::new()

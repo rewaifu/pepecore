@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use pepecore::read::{read_in_path,read_in_buffer};
-//! use pepecore::svec::SVec;
+//! use pepecore_array::{SVec};
 //! use pepecore::enums::ImgColor;
 //!
 //! // Read a JPEG file as RGB image:
@@ -22,7 +22,6 @@
 //! println!("PSD size: {:?}", dynamic.shape());
 //! ```
 
-use crate::array::svec::SVec;
 use crate::enums::ImgColor;
 use crate::errors::DecodeError;
 use crate::errors::DecodeError::FileOpenError;
@@ -31,6 +30,7 @@ use crate::ops::read::decode::{
     psd_graya_decode, psd_rgb_decode, psd_rgba_decode,
 };
 use filebuffer::FileBuffer;
+use pepecore_array::SVec;
 /// Read image from file path into `SVec`, choosing decoder by `ImgColor` and format.
 ///
 /// Automatically detects PSD files by magic bytes `56 66 80 83`.

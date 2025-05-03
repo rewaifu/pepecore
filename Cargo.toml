@@ -1,21 +1,11 @@
-[package]
-name = "pepecore"
-version = "0.1.3"
+[workspace]
+members = ["crates/*"]
+resolver = "3"
+
+[workspace.package]
 edition = "2024"
-repository = "https://github.com/rewaifu/pepecore"
-license = "MIT"
-readme = "README.md"
-authors = ["rewaifu"]
-description = "A Rust library for image decoding, encoding, and processing using an efficient SVec data structure."
-#homepage = ""
-documentation = "https://docs.rs/crate/pepecore"
-categories = ["multimedia::images"]
-keywords = ["halftone","screentone","cvt_color"]
+publish = false
 
-
-[dependencies]
-filebuffer = "1.0.0"
-image = "0.25.6"
-thiserror = "2.0.12"
-zune-core = "0.5.0-rc2"
-zune-psd = "0.5.0-rc0"
+[workspace.dependencies]
+pepecore-array = { path = "crates/pepecore-array" }
+pepecore = { path = "crates/pepecore" }

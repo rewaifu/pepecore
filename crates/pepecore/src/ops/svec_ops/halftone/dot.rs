@@ -1,5 +1,6 @@
-use crate::array::svec::{SVec, Shape};
-use crate::enums::{DotType, ImgData};
+use crate::enums::DotType;
+use pepecore_array::{ImgData, SVec, Shape};
+
 fn create_mask(dot: &SVec, dot_inv: &SVec) -> SVec {
     let (h, w, c) = dot.shape();
     let (h2, w2) = (h * 2, w * 2);
@@ -47,7 +48,7 @@ fn line(x: f32, y: f32, h: f32) -> bool {
     if gg < y {
         jj = g > y
     }
-    return jj;
+    jj
 }
 
 fn invline(x: f32, y: f32, h: f32) -> bool {
@@ -57,7 +58,7 @@ fn invline(x: f32, y: f32, h: f32) -> bool {
     if gg < y {
         jj = g > y
     }
-    return jj;
+    jj
 }
 
 fn ellipse(x: f32, y: f32, h: f32) -> bool {

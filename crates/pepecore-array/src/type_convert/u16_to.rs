@@ -1,5 +1,4 @@
-use crate::array::svec::SVec;
-use crate::enums::ImgData;
+use crate::{ImgData, SVec};
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
@@ -153,8 +152,7 @@ pub fn convert_u16_to_u8_normalized(input: &mut SVec) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::array::svec::Shape;
-    use crate::enums::ImgData;
+    use crate::{ImgData, Shape};
 
     #[test]
     fn u16_to_u8_test() {

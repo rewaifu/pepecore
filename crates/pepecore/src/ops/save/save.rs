@@ -7,10 +7,9 @@
 //!
 //! ```rust
 //! use pepecore::save::svec_save;
-//! use pepecore::array::svec::SVec;
-//! use pepecore::enums::{ImgColor, ImgData};
+//! use pepecore_array::{SVec,Shape,PixelType,ImgData};
+//! use pepecore::enums::{ImgColor};
 //! use std::fs;
-//! use pepecore::svec::Shape;
 //!
 //! // Assume `svec` is obtained from decoding an image or PSD
 //! let svec: SVec = SVec::new(Shape::new(3,3,None),ImgData::U8(vec![128,0,100,
@@ -20,11 +19,10 @@
 //! // Save as PNG with automatic channel mapping
 //! svec_save(svec, "output.png").expect("Failed to save image");
 //! ```
-use crate::array::svec::SVec;
-use crate::enums::ImgData;
 use crate::errors::SaveError;
 use crate::errors::SaveError::{GraySaveError, RGBSaveError, UnsupportedChannelSaveError};
 use image::{ImageBuffer, Luma, LumaA, Rgb, Rgba};
+use pepecore_array::{ImgData, SVec};
 /// Save an `SVec` image to the filesystem at the given `path`.
 ///
 /// Automatically selects the appropriate pixel buffer based on the SVec's channel count and data type:
@@ -49,9 +47,8 @@ use image::{ImageBuffer, Luma, LumaA, Rgb, Rgba};
 /// # Examples
 ///
 /// ```rust
-/// use pepecore::enums::ImgData;
 /// use pepecore::save::svec_save;
-/// use pepecore::svec::{SVec, Shape};
+/// use pepecore_array::{SVec,Shape,PixelType,ImgData};
 /// // Create or decode an SVec with 3 channels, u8 data
 /// let svec: SVec = SVec::new(Shape::new(1,1,Some(3)),ImgData::U8(vec![0,128,255]));
 /// svec_save(svec, "photo_out.jpg").unwrap();

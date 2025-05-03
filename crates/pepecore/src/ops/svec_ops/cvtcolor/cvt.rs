@@ -1,5 +1,5 @@
-use crate::enums::PixelType;
-use crate::svec::{SVec, Shape};
+use pepecore_array::{PixelType, SVec, Shape};
+
 fn rgb_swap<T: Copy>(ptr: *mut T, len: usize) {
     unsafe {
         for i in (0..len).step_by(3) {
@@ -9,6 +9,7 @@ fn rgb_swap<T: Copy>(ptr: *mut T, len: usize) {
         }
     }
 }
+
 pub fn rgb_to_bgr(img: &mut SVec) {
     let len = img.get_len();
     let img_c = img.shape.get_channels();

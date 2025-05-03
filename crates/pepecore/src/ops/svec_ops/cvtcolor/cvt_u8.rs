@@ -1,6 +1,5 @@
-use crate::array::svec::{SVec, Shape};
-use crate::enums::ImgData;
 use crate::ops::svec_ops::cvtcolor::lut::{create_lut_rgb2gray, create_lut_rgb2ycbcr, create_lut_ycbcr2rgb};
+use pepecore_array::{ImgData, SVec, Shape};
 
 pub fn rgb_to_gray_u8(img: &mut SVec, r: f32, g: f32, b: f32) {
     let (lut_r, lut_g, lut_b) = create_lut_rgb2gray(r, g, b);
