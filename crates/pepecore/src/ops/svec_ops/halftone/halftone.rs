@@ -52,9 +52,8 @@ where
     // Retrieve image shape and data buffer
     let (height, width, channels_opt) = img.shape();
     let data = img
-        .get_data_mut::<T>()
-        .map_err(|e| HalftoneError::GetDataError(format!("{:?}", e)))?;
-    let channels = channels_opt.ok_or(HalftoneError::NoChannelsError)?;
+        .get_data_mut::<T>()?;
+    let channels = channels_opt.ok_or(pepecore_array::error::Error::NoChannelsError)?;
 
     // Ensure that dot_sizes matches number of channels
     if dot_sizes.len() < channels || dot_type.len() < channels {
@@ -73,8 +72,7 @@ where
         let matrix = if size > 0 {
             let kernel = dot_create(size, &dot_type[index]);
             let kernel_data = kernel
-                .get_data::<f32>()
-                .map_err(|e| HalftoneError::GetDataError(format!("{:?}", e)))?;
+                .get_data::<f32>()?;
             T::prepare_dot_matrix(kernel_data)
         } else {
             Vec::new()
@@ -138,9 +136,8 @@ where
     // Retrieve image shape and data buffer
     let (height, width, channels_opt) = img.shape();
     let data = img
-        .get_data_mut::<T>()
-        .map_err(|e| HalftoneError::GetDataError(format!("{:?}", e)))?;
-    let channels = channels_opt.ok_or(HalftoneError::NoChannelsError)?;
+        .get_data_mut::<T>()?;
+    let channels = channels_opt.ok_or(pepecore_array::error::Error::NoChannelsError)?;
 
     // Ensure dot_sizes and angles arrays match number of channels
     if dot_sizes.len() < channels || angles.len() < channels || dot_type.len() < channels {
@@ -160,8 +157,7 @@ where
         let matrix = if size > 0 {
             let kernel = dot_create(size, &dot_type[i]);
             let kernel_data = kernel
-                .get_data::<f32>()
-                .map_err(|e| HalftoneError::GetDataError(format!("{:?}", e)))?;
+                .get_data::<f32>()?;
             T::prepare_dot_matrix(kernel_data)
         } else {
             Vec::new()

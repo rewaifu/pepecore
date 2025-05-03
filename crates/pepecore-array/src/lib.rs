@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 mod type_convert;
 
 use crate::error::Error;

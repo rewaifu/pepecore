@@ -557,6 +557,9 @@ dependencies = [
 [[package]]
 name = "pepecore-array"
 version = "0.1.0"
+dependencies = [
+ "thiserror 2.0.12",
+]
 
 [[package]]
 name = "pkg-config"
