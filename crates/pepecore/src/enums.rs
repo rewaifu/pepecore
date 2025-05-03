@@ -22,6 +22,10 @@ pub enum CVTColor {
     RGB2BGR,
     BGR2RGB,
     Gray2RGB,
+    RGB2Bayer_RGGB,
+    RGB2Bayer_BGGR,
+    RGB2Bayer_GRBG,
+    RGB2Bayer_GBRG,
 }
 
 #[derive(Clone, Debug)]

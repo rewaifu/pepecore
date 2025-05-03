@@ -16,6 +16,26 @@ pub struct Shape {
     channels: Option<usize>,
 }
 
+impl From<Vec<usize>> for Shape {
+    fn from(vec: Vec<usize>) -> Self {
+        Self {
+            height: vec[0],
+            width: vec[1],
+            channels: vec.get(2).cloned(),
+        }
+    }
+}
+
+impl From<&[usize]> for Shape {
+    fn from(value: &[usize]) -> Self {
+        Self {
+            height: value[0],
+            width: value[1],
+            channels: value.get(2).cloned(),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PixelType {
     U8,
