@@ -50,6 +50,24 @@ pub enum ImgData {
     U16(Vec<u16>),
 }
 
+impl From<Vec<f32>> for ImgData {
+    fn from(value: Vec<f32>) -> Self {
+        ImgData::F32(value)
+    }
+}
+
+impl From<Vec<u8>> for ImgData {
+    fn from(value: Vec<u8>) -> Self {
+        ImgData::U8(value)
+    }
+}
+
+impl From<Vec<u16>> for ImgData {
+    fn from(value: Vec<u16>) -> Self {
+        ImgData::U16(value)
+    }
+}
+
 impl ImgData {
     pub fn pixel_type(&self) -> PixelType {
         match self {
