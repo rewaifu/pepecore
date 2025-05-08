@@ -93,7 +93,6 @@ jobs:
       - python-macos-arm64
       - python-manylinux-x86_64
       - python-manylinux-arm64
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Download wheels
@@ -104,7 +103,7 @@ jobs:
           merge-multiple: true
 
       - name: Upload to PyPi
-        if: ${{ !github.event.inputs.upload_to_internal_index }}
+        if: ${{ github.ref == 'refs/heads/main' && !github.event.inputs.upload_to_internal_index }}
         uses: PyO3/maturin-action@v1
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
