@@ -12,6 +12,6 @@ crate-type = ["cdylib"]
 numpy = "0.24.0"
 pepecore-array.workspace = true
 pepecore.workspace = true
-pyo3 = "0.24.2"
+pyo3 = { version = "0.24.2", features = ["abi3-py310", "extension-module"] }
 rayon = "1.10.0"
 libc = "1.0.0-alpha.1"

@@ -14,19 +14,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  python-macos-arm64:
-    name: Build Python (macOS arm64)
-    runs-on: macos-14
+  python-macos:
+    name: Build Python (macOS)
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [ x86_64, aarch64 ]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install protoc
-        uses: arduino/setup-protoc@v3
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Setup python
+      - name: Cache Cargo build outputs
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-${{ matrix.target }}-
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
@@ -34,65 +48,111 @@ jobs:
       - name: Maturin build
         uses: PyO3/maturin-action@v1
         with:
+          target: ${{ matrix.target }}
           args: --release --out dist
           working-directory: crates/pepecore-py-bindings
           container: 'off'
 
-      - name: Upload python wheels
+      - name: Upload Python wheels
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          name: wheels-macos-arm64
+          name: wheels-macos-${{ matrix.target }}
           path: crates/pepecore-py-bindings/dist
 
-  python-manylinux-x86_64:
-    name: Build python (Linux x86-64)
+  python-linux:
+    name: Build Python (Linux)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ x86_64, x86, aarch64, armv7, s390x, ppc64le ]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache Cargo build outputs
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-${{ matrix.target }}-
 
       - name: Maturin build
         uses: PyO3/maturin-action@v1
         with:
+          target: ${{ matrix.target }}
           args: --release --out dist
           working-directory: crates/pepecore-py-bindings
           manylinux: 'auto'
 
-      - name: Upload python wheels
+      - name: Upload Python wheels
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          name: wheels-linux-x86_64
+          name: wheels-linux-${{ matrix.target }}
           path: crates/pepecore-py-bindings/dist
 
-  python-manylinux-arm64:
-    name: Build python (Linux arm64)
-    runs-on: ubuntu-2404-arm-4-core
+  python-windows:
+    name: Build Python (Windows)
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [ x64, x86 ]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Users\runneradmin\.cargo\registry\index
+            C:\Users\runneradmin\.cargo\registry\cache
+            C:\Users\runneradmin\.cargo\git\db
+          key: windows-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache Cargo build outputs
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: windows-cargo-target-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            windows-cargo-target-${{ matrix.target }}-
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          architecture: ${{ matrix.target }}
 
       - name: Maturin build
         uses: PyO3/maturin-action@v1
         with:
+          target: ${{ matrix.target }}
           args: --release --out dist
           working-directory: crates/pepecore-py-bindings
-          manylinux: 2_17
 
-      - name: Upload python wheels
+      - name: Upload Python wheels
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          name: wheels-linux-arm64
+          name: wheels-windows-${{ matrix.target }}
           path: crates/pepecore-py-bindings/dist
 
   python-pypi-upload:
-    name: Upload to PyPi
+    name: Upload to PyPI
     needs:
-      - python-macos-arm64
-      - python-manylinux-x86_64
-      - python-manylinux-arm64
+      - python-macos
+      - python-linux
+      - python-windows
     runs-on: ubuntu-latest
     steps:
       - name: Download wheels
@@ -102,7 +162,7 @@ jobs:
           pattern: wheels-*
           merge-multiple: true
 
-      - name: Upload to PyPi
+      - name: Upload to PyPI
         if: ${{ github.ref == 'refs/heads/main' && !github.event.inputs.upload_to_internal_index }}
         uses: PyO3/maturin-action@v1
         env:
