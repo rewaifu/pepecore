@@ -2,6 +2,7 @@ use crate::{ImgData, SVec};
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
+#[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 unsafe fn convert_simd_avx2_normalized_u8_to_f32(input: &mut SVec) {
     let len = input.get_len();
@@ -85,6 +86,8 @@ pub fn convert_u8_to_f32_normalized(input: &mut SVec) {
     }
     convert_fallback_normalized_u8_to_f32(input)
 }
+
+#[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 unsafe fn convert_simd_avx2_u8_to_u16_normalized(input: &mut SVec) {
     let len = input.get_len();
