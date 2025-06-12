@@ -11,7 +11,7 @@ description = "A Rust library for image decoding, encoding, and processing using
 #homepage = ""
 documentation = "https://docs.rs/crate/pepecore"
 categories = ["multimedia::images"]
-keywords = ["halftone","screentone","cvt_color"]
+keywords = ["halftone", "screentone", "cvt_color"]
 
 [dependencies]
 filebuffer = "1.0.0"

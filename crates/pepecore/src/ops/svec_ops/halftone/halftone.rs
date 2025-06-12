@@ -51,8 +51,7 @@ where
 {
     // Retrieve image shape and data buffer
     let (height, width, channels_opt) = img.shape();
-    let data = img
-        .get_data_mut::<T>()?;
+    let data = img.get_data_mut::<T>()?;
     let channels = channels_opt.ok_or(pepecore_array::error::Error::NoChannelsError)?;
 
     // Ensure that dot_sizes matches number of channels
@@ -71,8 +70,7 @@ where
         let doubled = size * 2;
         let matrix = if size > 0 {
             let kernel = dot_create(size, &dot_type[index]);
-            let kernel_data = kernel
-                .get_data::<f32>()?;
+            let kernel_data = kernel.get_data::<f32>()?;
             T::prepare_dot_matrix(kernel_data)
         } else {
             Vec::new()
@@ -135,8 +133,7 @@ where
 {
     // Retrieve image shape and data buffer
     let (height, width, channels_opt) = img.shape();
-    let data = img
-        .get_data_mut::<T>()?;
+    let data = img.get_data_mut::<T>()?;
     let channels = channels_opt.ok_or(pepecore_array::error::Error::NoChannelsError)?;
 
     // Ensure dot_sizes and angles arrays match number of channels
@@ -156,8 +153,7 @@ where
         let doubled = size * 2;
         let matrix = if size > 0 {
             let kernel = dot_create(size, &dot_type[i]);
-            let kernel_data = kernel
-                .get_data::<f32>()?;
+            let kernel_data = kernel.get_data::<f32>()?;
             T::prepare_dot_matrix(kernel_data)
         } else {
             Vec::new()

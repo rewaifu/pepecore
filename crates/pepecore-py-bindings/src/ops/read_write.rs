@@ -27,7 +27,7 @@ pub fn read<'py>(py: Python<'py>, path: String, color_mode: ColorMode, img_forma
         }
         ImgFormat::DYNAMIC => read_in_path(&*path, ImgColor::from(color_mode)).unwrap(),
     });
-    
+
     Ok(match img.pixel_type() {
         PixelType::U8 => img.to_pyany::<u8>(py)?,
         PixelType::F32 => img.to_pyany::<f32>(py)?,

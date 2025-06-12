@@ -1,5 +1,5 @@
-use pepecore_array::error::Error;
 use array::{PixelType, SVec, Shape};
+use pepecore_array::error::Error;
 
 pub fn crop(img: &mut SVec, x: usize, y: usize, w: usize, h: usize) -> Result<(), Error> {
     let (img_h, img_w, opt_c) = img.shape.get_shape();
@@ -8,7 +8,7 @@ pub fn crop(img: &mut SVec, x: usize, y: usize, w: usize, h: usize) -> Result<()
     if x + w > img_w || y + h > img_h {
         return Err(Error::OutOfBounds);
     }
-    
+
     match img.pixel_type() {
         PixelType::F32 => {
             let data = img.get_mut_vec::<f32>()?;
@@ -23,8 +23,8 @@ pub fn crop(img: &mut SVec, x: usize, y: usize, w: usize, h: usize) -> Result<()
                 write_index += w * c;
             }
 
-            data.truncate(w * h * c);       
-        },
+            data.truncate(w * h * c);
+        }
         PixelType::U16 => {
             let data = img.get_mut_vec::<u16>()?;
 
@@ -39,7 +39,7 @@ pub fn crop(img: &mut SVec, x: usize, y: usize, w: usize, h: usize) -> Result<()
             }
 
             data.truncate(w * h * c);
-        },
+        }
         PixelType::U8 => {
             let data = img.get_mut_vec::<u8>()?;
 
@@ -64,10 +64,10 @@ pub fn crop(img: &mut SVec, x: usize, y: usize, w: usize, h: usize) -> Result<()
 
 #[cfg(test)]
 mod tests {
+    use crate::enums::ImgColor;
     use crate::ops::read::read::read_in_path;
     use crate::ops::save::save::svec_save;
     use std::path::Path;
-    use crate::enums::ImgColor;
 
     #[test]
     fn test_crop() {
@@ -78,5 +78,4 @@ mod tests {
 
         svec_save(img, "temp.png").expect("save failed");
     }
-
 }

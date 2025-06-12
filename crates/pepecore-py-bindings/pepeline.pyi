@@ -3,7 +3,6 @@ import numpy as np
 from pathlib import Path
 from typing import Union
 
-
 class ImgColor(IntEnum):
     GRAY = 0
     RGB = 1
@@ -14,7 +13,6 @@ class ImgColor(IntEnum):
     def __reduce__(self):
         return (self.__class__, (self.value,))
 
-
 class ImgFormat(IntEnum):
     F32 = 0
     U8 = 1
@@ -23,7 +21,6 @@ class ImgFormat(IntEnum):
 
     def __reduce__(self):
         return (self.__class__, (self.value,))
-
 
 class CVTColor(IntEnum):
     RGB2Gray_2020 = 0
@@ -44,22 +41,12 @@ class CVTColor(IntEnum):
     def __reduce__(self):
         return (self.__class__, (self.value,))
 
-
-def read(path: Union[str | Path], color_mode: ImgColor = ImgColor.DYNAMIC,
-         img_format: ImgFormat = ImgFormat.DYNAMIC) -> np.ndarray: ...
-
-
+def read(
+    path: Union[str | Path],
+    color_mode: ImgColor = ImgColor.DYNAMIC,
+    img_format: ImgFormat = ImgFormat.DYNAMIC,
+) -> np.ndarray: ...
 def save(img: np.ndarray, path: Union[str | Path]): ...
-
-
 def cvt_color(img: np.ndarray, cvt_mode: CVTColor): ...
 
-
-__all__ = [
-    'ImgColor',
-    'read',
-    'save',
-    'cvt_color',
-    'CVTColor',
-    'ImgFormat'
-]
+__all__ = ["ImgColor", "read", "save", "cvt_color", "CVTColor", "ImgFormat"]

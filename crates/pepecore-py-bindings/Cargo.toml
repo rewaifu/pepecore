@@ -4,17 +4,17 @@ version = "1.0.0"
 edition.workspace = true
 publish.workspace = true
 
+[dependencies]
+libc = "1.0.0-alpha.1"
+numpy = "0.25.0"
+pepecore.workspace = true
+pepecore-array.workspace = true
+pyo3 = { version = "0.25.0", features = ["abi3-py310", "extension-module"] }
+rayon = "1.10.0"
+
 [lib]
 name = "pepeline"
 crate-type = ["cdylib"]
-
-[dependencies]
-numpy = "0.25.0"
-pepecore-array.workspace = true
-pepecore.workspace = true
-pyo3 = { version = "0.25.0", features = ["abi3-py310", "extension-module"] }
-rayon = "1.10.0"
-libc = "1.0.0-alpha.1"
 
 [tool.uv]
 cache-keys = [{ file = "Cargo.toml" }, { file = "pyproject.toml" }, { dir = "src" }]

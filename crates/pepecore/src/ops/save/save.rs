@@ -20,11 +20,11 @@
 //! svec_save(svec, "output.png").expect("Failed to save image");
 //! ```
 
-use std::path::Path;
 use crate::errors::SaveError;
 use crate::errors::SaveError::{GraySaveError, RGBSaveError, UnsupportedChannelSaveError};
 use image::{ImageBuffer, Luma, LumaA, Rgb, Rgba};
 use pepecore_array::{ImgData, SVec};
+use std::path::Path;
 /// Save an `SVec` image to the filesystem at the given `path`.
 ///
 /// Automatically selects the appropriate pixel buffer based on the SVec's channel count and data type:

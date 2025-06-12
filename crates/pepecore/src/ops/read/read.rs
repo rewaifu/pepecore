@@ -22,8 +22,6 @@
 //! println!("PSD size: {:?}", dynamic.shape());
 //! ```
 
-use std::fmt::{Debug};
-use std::path::Path;
 use crate::enums::ImgColor;
 use crate::errors::DecodeError;
 use crate::errors::DecodeError::FileOpenError;
@@ -33,6 +31,8 @@ use crate::ops::read::decode::{
 };
 use filebuffer::FileBuffer;
 use pepecore_array::SVec;
+use std::fmt::Debug;
+use std::path::Path;
 /// Read image from file path into `SVec`, choosing decoder by `ImgColor` and format.
 ///
 /// Automatically detects PSD files by magic bytes `56 66 80 83`.
@@ -57,7 +57,7 @@ use pepecore_array::SVec;
 /// assert_eq!(svec.shape.get_channels(), Some(4));
 /// ```
 
-pub fn read_in_path<P: Debug + AsRef<Path> + ?Sized>(path:& P, img_color: ImgColor) -> Result<SVec, DecodeError> {
+pub fn read_in_path<P: Debug + AsRef<Path> + ?Sized>(path: &P, img_color: ImgColor) -> Result<SVec, DecodeError> {
     let img_buffer = FileBuffer::open(path).map_err(|e| FileOpenError(format!("Path: {:?} FileBuffer error: {:?}", path, e)))?;
     Ok(match &img_buffer[..4] {
         [56, 66, 80, 83] => match img_color {
