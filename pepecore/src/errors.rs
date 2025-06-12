@@ -15,6 +15,8 @@ pub enum SaveError {
     RGBSaveError(String),
     #[error("Gray save Error: {0}")]
     GraySaveError(String),
+    #[error("Jxl save Error: {0}")]
+    JxlSaveError(String),
     #[error("Unsupported Channel Save Error: channel - {0}")]
     UnsupportedChannelSaveError(String),
 }

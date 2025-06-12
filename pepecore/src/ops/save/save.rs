@@ -21,10 +21,15 @@
 //! ```
 
 use crate::errors::SaveError;
-use crate::errors::SaveError::{GraySaveError, RGBSaveError, UnsupportedChannelSaveError};
+use crate::errors::SaveError::{GraySaveError, JxlSaveError, RGBSaveError, UnsupportedChannelSaveError};
 use image::{ImageBuffer, Luma, LumaA, Rgb, Rgba};
 use pepecore_array::{ImgData, SVec};
 use std::path::Path;
+use zune_core::bit_depth::BitDepth;
+use zune_core::colorspace::ColorSpace;
+use zune_core::options::EncoderOptions;
+use zune_jpegxl::JxlSimpleEncoder;
+
 /// Save an `SVec` image to the filesystem at the given `path`.
 ///
 /// Automatically selects the appropriate pixel buffer based on the SVec's channel count and data type:
@@ -56,6 +61,16 @@ use std::path::Path;
 /// svec_save(svec, "photo_out.jpg").unwrap();
 /// ```
 pub fn svec_save<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveError> {
+    let ext = path
+        .as_ref()
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if ext == "jxl" {
+        return save_jxl(img, path);
+    }
+
     let (height, width, channel) = img.shape();
     Ok(match channel {
         Some(1) | None => match img.data {
@@ -139,4 +154,56 @@ pub fn svec_save<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), Sav
 
         _ => return Err(UnsupportedChannelSaveError(format!("{:?}", channel))),
     })
+}
+
+fn save_jxl<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveError> {
+    let (height, width, channel) = img.shape();
+    let colorspace = match channel {
+        Some(1) | None => ColorSpace::Luma,
+        Some(2) => ColorSpace::LumaA,
+        Some(3) => ColorSpace::RGB,
+        Some(4) => ColorSpace::RGBA,
+        _ => return Err(UnsupportedChannelSaveError(format!("{:?}", channel))),
+    };
+    match img.data {
+        ImgData::U8(data) => {
+            let options = EncoderOptions::new(width, height, colorspace, BitDepth::Eight);
+            let encoder = JxlSimpleEncoder::new(&data, options);
+            let mut out = Vec::new();
+            encoder
+                .encode(&mut out)
+                .map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            std::fs::write(path, out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            Ok(())
+        }
+        ImgData::U16(data) => {
+            let mut bytes = Vec::with_capacity(data.len() * 2);
+            for v in data {
+                bytes.extend_from_slice(&v.to_ne_bytes());
+            }
+            let options = EncoderOptions::new(width, height, colorspace, BitDepth::Sixteen);
+            let encoder = JxlSimpleEncoder::new(&bytes, options);
+            let mut out = Vec::new();
+            encoder
+                .encode(&mut out)
+                .map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            std::fs::write(path, out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            Ok(())
+        }
+        ImgData::F32(data) => {
+            let mut bytes = Vec::with_capacity(data.len());
+            for v in data {
+                let val = (v.clamp(0.0, 1.0) * 255.0) as u8;
+                bytes.push(val);
+            }
+            let options = EncoderOptions::new(width, height, colorspace, BitDepth::Eight);
+            let encoder = JxlSimpleEncoder::new(&bytes, options);
+            let mut out = Vec::new();
+            encoder
+                .encode(&mut out)
+                .map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            std::fs::write(path, out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            Ok(())
+        }
+    }
 }

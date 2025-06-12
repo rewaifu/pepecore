@@ -622,6 +622,7 @@ dependencies = [
  "pepecore-array",
  "thiserror 2.0.12",
  "zune-core 0.5.0-rc2",
+ "zune-jpegxl",
  "zune-psd",
 ]
 
@@ -1304,6 +1305,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99a5bab8d7dedf81405c4bb1f2b83ea057643d9cb28778cea9eecddeedd2e028"
 dependencies = [
  "zune-core 0.4.12",
+]
+
+[[package]]
+name = "zune-jpegxl"
+version = "0.5.0-rc1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "684c65a36dd1f7993d01a5431fb23d23069c74409254b27ef4654e698217617e"
+dependencies = [
+ "zune-core 0.5.0-rc2",
 ]
 
 [[package]]
