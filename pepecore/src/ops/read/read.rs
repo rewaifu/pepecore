@@ -113,7 +113,7 @@ pub fn read_in_buffer(img_buffer: &[u8], img_color: ImgColor) -> Result<SVec, De
             ImgColor::GRAY => img_gray_decode(&img_buffer)?,
             ImgColor::RGB => img_rgb_decode(&img_buffer)?,
             ImgColor::RGBA => img_rgba_decode(&img_buffer)?,
-            ImgColor::GRAYA => img_gray_decode(&img_buffer)?,
+            ImgColor::GRAYA => img_graya_decode(&img_buffer)?,
         },
     })
 }
