@@ -34,5 +34,5 @@ profile = "release"
 strip = true
 
 [build-system]
-requires = ["maturin>=1.0,<2.0"]
+requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"

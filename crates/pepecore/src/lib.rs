@@ -39,6 +39,8 @@
 //! save::svec_save(img, "output.png").unwrap();
 //! ```
 
+extern crate pepecore_array as array;
+
 pub mod enums;
 pub mod errors;
 pub mod ops;

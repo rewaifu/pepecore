@@ -6,4 +6,6 @@ pub enum Error {
     TypeMismatch { expected: &'static str, actual: &'static str },
     #[error("No channels available")]
     NoChannelsError,
+    #[error("Dimensions out of bounds")]
+    OutOfBounds,
 }

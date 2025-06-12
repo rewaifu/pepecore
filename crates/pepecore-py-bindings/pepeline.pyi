@@ -1,25 +1,31 @@
-from enum import Enum
+from enum import IntEnum
 import numpy as np
 from pathlib import Path
 from typing import Union
 
 
-class ImgColor(Enum):
+class ImgColor(IntEnum):
     GRAY = 0
     RGB = 1
     RGBA = 2
     GRAYA = 3
     DYNAMIC = 4
 
+    def __reduce__(self):
+        return (self.__class__, (self.value,))
 
-class ImgFormat(Enum):
+
+class ImgFormat(IntEnum):
     F32 = 0
     U8 = 1
     U16 = 2
     DYNAMIC = 3
 
+    def __reduce__(self):
+        return (self.__class__, (self.value,))
 
-class CVTColor(Enum):
+
+class CVTColor(IntEnum):
     RGB2Gray_2020 = 0
     RGB2Gray_601 = 1
     RGB2Gray_709 = 2
@@ -34,6 +40,9 @@ class CVTColor(Enum):
     RGB2BGR = 11
     BGR2RGB = 12
     Gray2RGB = 13
+
+    def __reduce__(self):
+        return (self.__class__, (self.value,))
 
 
 def read(path: Union[str | Path], color_mode: ImgColor = ImgColor.DYNAMIC,

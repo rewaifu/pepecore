@@ -19,6 +19,8 @@
 //! // Save as PNG with automatic channel mapping
 //! svec_save(svec, "output.png").expect("Failed to save image");
 //! ```
+
+use std::path::Path;
 use crate::errors::SaveError;
 use crate::errors::SaveError::{GraySaveError, RGBSaveError, UnsupportedChannelSaveError};
 use image::{ImageBuffer, Luma, LumaA, Rgb, Rgba};
@@ -53,7 +55,7 @@ use pepecore_array::{ImgData, SVec};
 /// let svec: SVec = SVec::new(Shape::new(1,1,Some(3)),ImgData::U8(vec![0,128,255]));
 /// svec_save(svec, "photo_out.jpg").unwrap();
 /// ```
-pub fn svec_save(img: SVec, path: &str) -> Result<(), SaveError> {
+pub fn svec_save<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveError> {
     let (height, width, channel) = img.shape();
     Ok(match channel {
         Some(1) | None => match img.data {

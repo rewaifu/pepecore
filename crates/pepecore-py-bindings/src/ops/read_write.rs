@@ -7,7 +7,7 @@ use pepecore_array::PixelType;
 use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
 
 #[pyfunction]
-#[pyo3(signature = (path, color_mode = ColorMode::DYNAMIC,img_format =  ImgFormat::DYNAMIC))]
+#[pyo3(signature = (path, color_mode = ColorMode::DYNAMIC, img_format =  ImgFormat::DYNAMIC))]
 pub fn read<'py>(py: Python<'py>, path: String, color_mode: ColorMode, img_format: ImgFormat) -> PyResult<Bound<'py, PyAny>> {
     let img = py.allow_threads(|| match img_format {
         ImgFormat::F32 => {
