@@ -1,7 +1,8 @@
+from collections.abc import Sequence
 from enum import IntEnum
-import numpy as np
 from pathlib import Path
-from typing import Union
+
+import numpy as np
 
 class ImgColor(IntEnum):
     GRAY = 0
@@ -11,7 +12,7 @@ class ImgColor(IntEnum):
     DYNAMIC = 4
 
     def __reduce__(self):
-        return (self.__class__, (self.value,))
+        ...
 
 class ImgFormat(IntEnum):
     F32 = 0
@@ -20,7 +21,17 @@ class ImgFormat(IntEnum):
     DYNAMIC = 3
 
     def __reduce__(self):
-        return (self.__class__, (self.value,))
+        ...
+
+class DotType(IntEnum):
+    CIRCLE = 0
+    CROSS = 1
+    ELLIPSE = 2
+    LINE = 3
+    INVLINE = 4
+
+    def __reduce__(self):
+        ...
 
 class CVTColor(IntEnum):
     RGB2Gray_2020 = 0
@@ -39,14 +50,46 @@ class CVTColor(IntEnum):
     Gray2RGB = 13
 
     def __reduce__(self):
-        return (self.__class__, (self.value,))
+        ...
 
 def read(
-    path: Union[str | Path],
-    color_mode: ImgColor = ImgColor.DYNAMIC,
-    img_format: ImgFormat = ImgFormat.DYNAMIC,
+        path: str | Path, color_mode: ImgColor = ..., img_format: ImgFormat = ...,
 ) -> np.ndarray: ...
-def save(img: np.ndarray, path: Union[str | Path]): ...
+
+def save(img: np.ndarray, path: str | Path): ...
+
 def cvt_color(img: np.ndarray, cvt_mode: CVTColor): ...
 
-__all__ = ["ImgColor", "read", "save", "cvt_color", "CVTColor", "ImgFormat"]
+def crop(img: np.ndarray, x: int, y: int, w: int, h: int) -> np.ndarray: ...
+
+def color_levels(
+        img: np.ndarray,
+        in_low: int | None = 0,
+        in_high: int | None = 255,
+        out_low: int | None = 0,
+        out_high: int | None = 255,
+        gamma: float | None = 1.0,
+) -> np.ndarray: ...
+
+def screentone(
+        img: np.ndarray, dot_size: int, angle: int | None = 0, dot_type: DotType | None = ...,
+) -> np.ndarray: ...
+
+def halftone(
+        img: np.ndarray, dot_sizes: Sequence[int], angles: Sequence[float] | None = None,
+        dot_types: Sequence[DotType] | None = None,
+) -> np.ndarray: ...
+
+__all__ = [
+    "CVTColor",
+    "DotType",
+    "ImgColor",
+    "ImgFormat",
+    "color_levels",
+    "crop",
+    "cvt_color",
+    "halftone",
+    "read",
+    "save",
+    "screentone",
+]

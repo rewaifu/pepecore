@@ -1,4 +1,4 @@
-use pepecore::enums::CVTColor;
+use pepecore::enums::{CVTColor, DotType};
 use pepecore::enums::ImgColor;
 use pyo3::pyclass;
 
@@ -70,6 +70,28 @@ impl From<ColorCVT> for CVTColor {
             ColorCVT::RGB2BGR => CVTColor::RGB2BGR,
             ColorCVT::BGR2RGB => CVTColor::BGR2RGB,
             ColorCVT::Gray2RGB => CVTColor::Gray2RGB,
+        }
+    }
+}
+
+#[pyclass(name = "DotType")]
+#[derive(Clone, Copy)]
+pub enum DotTypePy {
+    CIRCLE,
+    CROSS,
+    ELLIPSE,
+    LINE,
+    INVLINE,
+}
+
+impl From<DotTypePy> for DotType {
+    fn from(value: DotTypePy) -> Self {
+        match value {
+            DotTypePy::CIRCLE => DotType::CIRCLE,
+            DotTypePy::CROSS => DotType::CROSS,
+            DotTypePy::ELLIPSE => DotType::ELLIPSE,
+            DotTypePy::LINE => DotType::LINE,
+            DotTypePy::INVLINE => DotType::INVLINE,
         }
     }
 }

@@ -66,7 +66,7 @@ where
             parallel_memcpy_typed(src_ptr, dst_ptr, total);
         });
     } else {
-        buffer = readonly.to_owned_array().into_raw_vec();
+        buffer = readonly.to_owned_array().into_raw_vec_and_offset().0;
     }
 
     Ok(SVec::new(Shape::from(shape), ImgData::from(buffer)))
