@@ -6,11 +6,9 @@ use rayon::prelude::*;
 use std::mem::size_of;
 
 struct UnsafeSend<T>(*const T);
-
 unsafe impl<T> Send for UnsafeSend<T> {}
 
 struct UnsafeMutSend<T>(*mut T);
-
 unsafe impl<T> Send for UnsafeMutSend<T> {}
 
 unsafe fn parallel_memcpy_typed<T: Copy + Send + Sync>(src: UnsafeSend<T>, dst: UnsafeMutSend<T>, len: usize) {
@@ -51,25 +49,27 @@ pub trait SvecPyArray {
 
 fn alloc_from_np<T>(py: Python, np: &Bound<PyArrayDyn<T>>) -> PyResult<SVec>
 where
-    T: Element + Copy,
+    T: Element + Copy + Send,
     ImgData: From<Vec<T>>,
 {
+    // Получаем readonly‑view
     let readonly = np.try_readonly()?;
     let shape = readonly.shape();
+    let total = readonly.len();
+    let mut buffer: Vec<T> = Vec::with_capacity(total);
 
-    let img_len = readonly.len();
-    let mut img: Vec<T> = Vec::with_capacity(img_len);
-    let str_data = UnsafeSend(readonly.data());
+    if readonly.is_contiguous() {
+        let dst_ptr = UnsafeMutSend(buffer.as_mut_ptr());
+        let src_ptr = UnsafeSend(readonly.data());
+        py.allow_threads(|| unsafe {
+            buffer.set_len(total);
+            parallel_memcpy_typed(src_ptr, dst_ptr, total);
+        });
+    } else {
+        buffer = readonly.to_owned_array().into_raw_vec();
+    }
 
-    py.allow_threads(|| unsafe {
-        img.set_len(img_len);
-        parallel_memcpy_typed(str_data, UnsafeMutSend(img.as_mut_ptr()), img_len);
-    });
-
-    Ok(SVec::new(
-        Shape::new(shape[0], shape[1], shape.get(2).copied()),
-        ImgData::from(img),
-    ))
+    Ok(SVec::new(Shape::from(shape), ImgData::from(buffer)))
 }
 
 impl PySvec for Bound<'_, PyAny> {
@@ -104,6 +104,7 @@ impl SvecPyArray for SVec {
                     .expect("Type mismatch: SVec does not contain T data")
                     .as_ptr(),
             );
+            // Array2::to_pyarray()
             let new_data = UnsafeMutSend(arr.data());
             let len = self.get_len();
             py.allow_threads(|| parallel_memcpy_typed(data, new_data, len));

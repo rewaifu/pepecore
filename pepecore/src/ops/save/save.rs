@@ -170,9 +170,7 @@ fn save_jxl<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveErro
             let options = EncoderOptions::new(width, height, colorspace, BitDepth::Eight);
             let encoder = JxlSimpleEncoder::new(&data, options);
             let mut out = Vec::new();
-            encoder
-                .encode(&mut out)
-                .map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            encoder.encode(&mut out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
             std::fs::write(path, out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
             Ok(())
         }
@@ -184,9 +182,7 @@ fn save_jxl<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveErro
             let options = EncoderOptions::new(width, height, colorspace, BitDepth::Sixteen);
             let encoder = JxlSimpleEncoder::new(&bytes, options);
             let mut out = Vec::new();
-            encoder
-                .encode(&mut out)
-                .map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            encoder.encode(&mut out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
             std::fs::write(path, out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
             Ok(())
         }
@@ -199,9 +195,7 @@ fn save_jxl<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveErro
             let options = EncoderOptions::new(width, height, colorspace, BitDepth::Eight);
             let encoder = JxlSimpleEncoder::new(&bytes, options);
             let mut out = Vec::new();
-            encoder
-                .encode(&mut out)
-                .map_err(|e| JxlSaveError(format!("{:?}", e)))?;
+            encoder.encode(&mut out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
             std::fs::write(path, out).map_err(|e| JxlSaveError(format!("{:?}", e)))?;
             Ok(())
         }
