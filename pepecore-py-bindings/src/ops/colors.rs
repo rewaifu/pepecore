@@ -2,10 +2,10 @@ use crate::structure::enums::{ColorCVT, DotTypePy};
 use crate::structure::svec_traits::{PySvec, SvecPyArray};
 use pepecore::cvt_color::cvt_color;
 use pepecore::enums::CVTColor;
-use pepecore_array::PixelType;
-use pyo3::{Bound, PyAny, PyResult, Python, pyfunction, PyErr};
-use pyo3::exceptions::PyValueError;
 use pepecore::{color_levels, halftone, rotate_halftone, rotate_screentone, screentone};
+use pepecore_array::PixelType;
+use pyo3::exceptions::PyValueError;
+use pyo3::{Bound, PyAny, PyErr, PyResult, Python, pyfunction};
 
 #[pyfunction(name = "cvt_color")]
 pub fn py_cvt_color<'py>(py: Python<'py>, img: Bound<'py, PyAny>, cvt_mode: ColorCVT) -> PyResult<Bound<'py, PyAny>> {
@@ -61,9 +61,11 @@ pub fn py_screentone<'py>(
     let mut img = img.to_svec(py)?;
     let channels = img.shape.get_channels().unwrap_or(1);
     if channels != 1 {
-        return Err(PyValueError::new_err("The screentone filter only accepts grayscale images (single channel)."));
+        return Err(PyValueError::new_err(
+            "The screentone filter only accepts grayscale images (single channel).",
+        ));
     }
-    
+
     if let Some(angle) = angle {
         py.allow_threads(|| rotate_screentone(&mut img, dot_size, angle, &dot_type.into()));
     } else {

@@ -1,7 +1,7 @@
-use pyo3::{pyfunction, Bound, PyAny, PyResult, Python};
 use crate::structure::svec_traits::{PySvec, SvecPyArray};
 use pepecore::crop;
 use pepecore_array::PixelType;
+use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
 
 #[pyfunction(name = "crop")]
 pub fn py_crop<'py>(

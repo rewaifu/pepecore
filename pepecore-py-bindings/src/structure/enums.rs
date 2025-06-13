@@ -1,5 +1,5 @@
-use pepecore::enums::{CVTColor, DotType};
 use pepecore::enums::ImgColor;
+use pepecore::enums::{CVTColor, DotType};
 use pyo3::pyclass;
 
 #[pyclass(name = "ImgColor")]

@@ -49,10 +49,10 @@ pub mod ops;
 pub use ops::read::read;
 pub use ops::save::save;
 
+pub use ops::svec_ops::color_levels;
+pub use ops::svec_ops::crop::crop;
 pub use ops::svec_ops::cvtcolor::cvt_color;
 pub use ops::svec_ops::halftone::halftone::halftone;
 pub use ops::svec_ops::halftone::halftone::rotate_halftone;
 pub use ops::svec_ops::halftone::screentone::rotate_screentone;
 pub use ops::svec_ops::halftone::screentone::screentone;
-pub use ops::svec_ops::color_levels;
-pub use ops::svec_ops::crop::crop;
