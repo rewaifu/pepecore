@@ -73,13 +73,14 @@ jobs:
         with:
           command: sdist
           working-directory: pepecore-py-bindings
-          args: --out dist
+          args: -o dist
   
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
+          if-no-files-found: error
           name: sdist
-          path: dist/*.tar.gz
+          path: pepecore-py-bindings/dist/*.tar.gz
 
   python-linux:
     name: Build Python (Linux)

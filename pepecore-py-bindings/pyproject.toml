@@ -1,6 +1,9 @@
 [project]
 name = "pepeline"
 dynamic = ["version"]
+description = "A high-speed framework for image processing."
+license = { file = "../LICENSE" }
+readme = "README.md"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -27,7 +30,9 @@ dependencies = [
 ]
 
 [project.urls]
-repository = "https://github.com/rewaifu/pepecore"
+homepage = "https://github.com/rewaifu/pepecore/tree/main/pepecore-py-bindings"
+repository = "https://github.com/rewaifu/pepecore/tree/main/pepecore-py-bindings"
+documentation = "https://github.com/rewaifu/pepecore/tree/main/pepecore-py-bindings#readme"
 
 [tool.maturin]
 profile = "release"
@@ -50,6 +55,7 @@ skip-magic-trailing-comma = true
 [tool.ruff.lint]
 select = ['ALL']
 fixable = ["ALL"]
+ignore = ['COM812', 'D203', 'D211', 'D213', 'Q000', 'Q003']
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
