@@ -1,7 +1,7 @@
 mod ops;
 mod structure;
 
-use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat};
+use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat, TypeNoise};
 
 use pyo3::prelude::*;
 
@@ -14,9 +14,12 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::colors::py_color_levels, m)?)?;
     m.add_function(wrap_pyfunction!(ops::colors::py_screentone, m)?)?;
     m.add_function(wrap_pyfunction!(ops::colors::py_halftone, m)?)?;
+    m.add_function(wrap_pyfunction!(ops::old_rebind::best_tile, m)?)?;
+    m.add_function(wrap_pyfunction!(ops::old_rebind::noise_generate, m)?)?;
     m.add_class::<ColorMode>()?;
     m.add_class::<ImgFormat>()?;
     m.add_class::<ColorCVT>()?;
     m.add_class::<DotTypePy>()?;
+    m.add_class::<TypeNoise>()?;
     Ok(())
 }

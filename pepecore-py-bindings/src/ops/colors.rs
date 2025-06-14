@@ -5,7 +5,7 @@ use pepecore::enums::CVTColor;
 use pepecore::{color_levels, halftone, rotate_halftone, rotate_screentone, screentone};
 use pepecore_array::PixelType;
 use pyo3::exceptions::PyValueError;
-use pyo3::{Bound, PyAny, PyErr, PyResult, Python, pyfunction};
+use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
 
 #[pyfunction(name = "cvt_color")]
 pub fn py_cvt_color<'py>(py: Python<'py>, img: Bound<'py, PyAny>, cvt_mode: ColorCVT) -> PyResult<Bound<'py, PyAny>> {
@@ -32,18 +32,43 @@ pub fn py_color_levels<'py>(
     let mut img = img.to_svec(py)?;
     match img.pixel_type() {
         PixelType::U8 => {
-            let vec = img.get_mut_vec::<u8>().unwrap();
-            color_levels::u8_color_level(vec, in_low, in_high, out_low, out_high, gamma);
+            img.as_f32();
+            let vec = img.get_data_mut::<f32>().unwrap(); //temporary solution, since u8 and u16 give incorrect result
+            color_levels::f32_color_level(
+                vec,
+                in_low as f32 / 255.0,
+                in_high as f32 / 255.0,
+                out_low as f32 / 255.0,
+                out_high as f32 / 255.0,
+                gamma,
+            );
+            img.as_u8();
             img.to_pyany::<u8>(py)
         }
         PixelType::U16 => {
-            let vec = img.get_mut_vec::<u16>().unwrap();
-            color_levels::u16_color_level(vec, in_low as u16, in_high as u16, out_low as u16, out_high as u16, gamma);
+            img.as_f32();
+            let vec = img.get_data_mut::<f32>().unwrap(); //temporary solution, since u8 and u16 give incorrect result
+            color_levels::f32_color_level(
+                vec,
+                in_low as f32 / 255.0,
+                in_high as f32 / 255.0,
+                out_low as f32 / 255.0,
+                out_high as f32 / 255.0,
+                gamma,
+            );
+            img.as_u16();
             img.to_pyany::<u16>(py)
         }
         PixelType::F32 => {
             let vec = img.get_mut_vec::<f32>().unwrap();
-            color_levels::f32_color_level(vec, in_low as f32, in_high as f32, out_low as f32, out_high as f32, gamma);
+            color_levels::f32_color_level(
+                vec,
+                in_low as f32 / 255.0,
+                in_high as f32 / 255.0,
+                out_low as f32 / 255.0,
+                out_high as f32 / 255.0,
+                gamma,
+            );
             img.to_pyany::<f32>(py)
         }
     }
