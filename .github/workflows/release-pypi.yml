@@ -57,64 +57,64 @@ jobs:
           name: wheels-macos-${{ matrix.target }}
           path: pepecore-py-bindings/dist
 
-python-linux:
-  name: Build Python (Linux)
-  runs-on: ubuntu-latest
-  strategy:
-    matrix:
-      target: [ x86_64, x86, aarch64, armv7, s390x, ppc64le ]
-  steps:
-    - uses: actions/checkout@v4
-
-    - name: Cache Cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry/index
-          ~/.cargo/registry/cache
-          ~/.cargo/git/db
-        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-    - name: Cache Cargo build outputs
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ${{ runner.os }}-cargo-target-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-target-${{ matrix.target }}-
-
-    - name: Maturin build (wheels)
-      uses: PyO3/maturin-action@v1
-      with:
-        target: ${{ matrix.target }}
-        args: --release --out dist
-        working-directory: pepecore-py-bindings
-        manylinux: 'auto'
-
-    # ----------------------------
-    # Сборка sdist в /tmp/sdist
-    - name: Build sdist into temporary folder
-      uses: PyO3/maturin-action@v1
-      with:
-        working-directory: pepecore-py-bindings
-        # Указываем явный выходной каталог вне репозитория
-        args: --sdist --out /tmp/sdist
-
-    # Загрузка wheel-ов
-    - name: Upload Python wheels
-      uses: actions/upload-artifact@v4
-      with:
-        if-no-files-found: error
-        name: wheels-linux-${{ matrix.target }}
-        path: pepecore-py-bindings/dist/*.whl
-
-    # Загрузка sdist из временной папки
-    - name: Upload source distribution
-      uses: actions/upload-artifact@v4
-      with:
-        if-no-files-found: error
-        name: sdist
-        path: /tmp/sdist/*.tar.gz
+  python-linux:
+    name: Build Python (Linux)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ x86_64, x86, aarch64, armv7, s390x, ppc64le ]
+    steps:
+      - uses: actions/checkout@v4
+  
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+  
+      - name: Cache Cargo build outputs
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-${{ matrix.target }}-
+  
+      - name: Maturin build (wheels)
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist
+          working-directory: pepecore-py-bindings
+          manylinux: 'auto'
+  
+      # ----------------------------
+      # Сборка sdist в /tmp/sdist
+      - name: Build sdist into temporary folder
+        uses: PyO3/maturin-action@v1
+        with:
+          working-directory: pepecore-py-bindings
+          # Указываем явный выходной каталог вне репозитория
+          args: --sdist --out /tmp/sdist
+  
+      # Загрузка wheel-ов
+      - name: Upload Python wheels
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: wheels-linux-${{ matrix.target }}
+          path: pepecore-py-bindings/dist/*.whl
+  
+      # Загрузка sdist из временной папки
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: sdist
+          path: /tmp/sdist/*.tar.gz
 
   python-windows:
     name: Build Python (Windows)
