@@ -95,3 +95,13 @@ impl From<DotTypePy> for DotType {
         }
     }
 }
+
+#[derive(Clone)]
+#[pyclass]
+pub enum TypeNoise {
+    PERLIN = 0,
+    SIMPLEX = 1,
+    OPENSIMPLEX = 2,
+    SUPERSIMPLEX = 3,
+    PERLINSURFLET = 4,
+}
