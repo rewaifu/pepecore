@@ -90,7 +90,9 @@ jobs:
           args: --release --out dist
           working-directory: pepecore-py-bindings
           manylinux: 'auto'
-
+      - name: Ensure dist directory exists for sdist
+        run: mkdir -p dist
+        working-directory: pepecore-py-bindings
       - name: Maturin build (sdist)
         uses: PyO3/maturin-action@v1
         with:
