@@ -57,6 +57,29 @@ jobs:
           name: wheels-macos-${{ matrix.target }}
           path: pepecore-py-bindings/dist
 
+  python-sdist:
+    name: Build and upload sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+  
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+  
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          working-directory: pepecore-py-bindings
+          args: --sdist --out dist
+  
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
   python-linux:
     name: Build Python (Linux)
     runs-on: ubuntu-latest
@@ -65,7 +88,7 @@ jobs:
         target: [ x86_64, x86, aarch64, armv7, s390x, ppc64le ]
     steps:
       - uses: actions/checkout@v4
-
+  
       - name: Cache Cargo registry
         uses: actions/cache@v4
         with:
@@ -74,7 +97,7 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
+  
       - name: Cache Cargo build outputs
         uses: actions/cache@v4
         with:
@@ -82,7 +105,7 @@ jobs:
           key: ${{ runner.os }}-cargo-target-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-target-${{ matrix.target }}-
-
+  
       - name: Maturin build (wheels)
         uses: PyO3/maturin-action@v1
         with:
@@ -90,26 +113,13 @@ jobs:
           args: --release --out dist
           working-directory: pepecore-py-bindings
           manylinux: 'auto'
-
-      - name: Maturin build (sdist)
-        uses: PyO3/maturin-action@v1
-        with:
-          working-directory: pepecore-py-bindings
-          args: --sdist --out dist
-
+  
       - name: Upload Python wheels
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           name: wheels-linux-${{ matrix.target }}
           path: pepecore-py-bindings/dist/*.whl
-
-      - name: Upload source distribution
-        uses: actions/upload-artifact@v4
-        with:
-          if-no-files-found: error
-          name: sdist
-          path: pepecore-py-bindings/dist/*.tar.gz
 
   python-windows:
     name: Build Python (Windows)
@@ -163,6 +173,7 @@ jobs:
       - python-macos
       - python-linux
       - python-windows
+      - python-sdist
     runs-on: ubuntu-latest
     steps:
       - name: Download wheels
