@@ -45,7 +45,10 @@ class CVTColor(IntEnum):
     RGB2BGR = 11
     BGR2RGB = 12
     Gray2RGB = 13
-
+    RGB2Bayer_BGGR = 14
+    RGB2Bayer_RGGB = 15
+    RGB2Bayer_GBRG = 16
+    RGB2Bayer_GRBG = 17
     def __reduce__(self): ...
 
 class TypeNoise(Enum):
