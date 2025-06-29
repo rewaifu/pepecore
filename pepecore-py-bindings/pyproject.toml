@@ -43,7 +43,8 @@ requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"
 
 [tool.ruff]
-line-length = 120
+line-length = 150
+indent-width = 4
 preview = true
 
 [tool.ruff.format]

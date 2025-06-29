@@ -142,7 +142,7 @@ pub fn noise_generate<'py>(
     seed: Option<u32>,
     py: Python,
 ) -> PyResult<Py<PyArrayDyn<f32>>> {
-    let seed = seed.unwrap_or(rand::thread_rng().gen_range(1..=10000) as u32);
+    let seed = seed.unwrap_or(rand::rng().random_range(1..=10000) as u32);
     match size.len() {
         2 => {
             let mut array: Array2<f32> = Array2::zeros((size[0], size[1]));

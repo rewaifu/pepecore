@@ -165,6 +165,7 @@ fn save_jxl<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveErro
         Some(4) => ColorSpace::RGBA,
         _ => return Err(UnsupportedChannelSaveError(format!("{:?}", channel))),
     };
+    // fixme: open file stream and write to stream
     match img.data {
         ImgData::U8(data) => {
             let options = EncoderOptions::new(width, height, colorspace, BitDepth::Eight);
@@ -189,7 +190,7 @@ fn save_jxl<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveErro
         ImgData::F32(data) => {
             let mut bytes = Vec::with_capacity(data.len());
             for v in data {
-                let val = (v.clamp(0.0, 1.0) * 255.0) as u8;
+                let val = (v.clamp(0.0, 1.0) * 255.0) as u8; // fixme: slow
                 bytes.push(val);
             }
             let options = EncoderOptions::new(width, height, colorspace, BitDepth::Eight);
