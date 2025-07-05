@@ -102,18 +102,18 @@ pub fn read_in_path<P: Debug + AsRef<Path> + ?Sized>(path: &P, img_color: ImgCol
 pub fn read_in_buffer(img_buffer: &[u8], img_color: ImgColor) -> Result<SVec, DecodeError> {
     Ok(match &img_buffer[..4] {
         [56, 66, 80, 83] => match img_color {
-            ImgColor::DYNAMIC => psd_din_decode(&img_buffer)?,
-            ImgColor::GRAY => psd_gray_decode(&img_buffer)?,
-            ImgColor::RGB => psd_rgb_decode(&img_buffer)?,
-            ImgColor::RGBA => psd_rgba_decode(&img_buffer)?,
-            ImgColor::GRAYA => psd_graya_decode(&img_buffer)?,
+            ImgColor::DYNAMIC => psd_din_decode(img_buffer)?,
+            ImgColor::GRAY => psd_gray_decode(img_buffer)?,
+            ImgColor::RGB => psd_rgb_decode(img_buffer)?,
+            ImgColor::RGBA => psd_rgba_decode(img_buffer)?,
+            ImgColor::GRAYA => psd_graya_decode(img_buffer)?,
         },
         _ => match img_color {
-            ImgColor::DYNAMIC => img_din_decode(&img_buffer)?,
-            ImgColor::GRAY => img_gray_decode(&img_buffer)?,
-            ImgColor::RGB => img_rgb_decode(&img_buffer)?,
-            ImgColor::RGBA => img_rgba_decode(&img_buffer)?,
-            ImgColor::GRAYA => img_graya_decode(&img_buffer)?,
+            ImgColor::DYNAMIC => img_din_decode(img_buffer)?,
+            ImgColor::GRAY => img_gray_decode(img_buffer)?,
+            ImgColor::RGB => img_rgb_decode(img_buffer)?,
+            ImgColor::RGBA => img_rgba_decode(img_buffer)?,
+            ImgColor::GRAYA => img_graya_decode(img_buffer)?,
         },
     })
 }

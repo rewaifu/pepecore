@@ -13,7 +13,7 @@ unsafe impl<T> Send for UnsafeMutSend<T> {}
 
 unsafe fn parallel_memcpy_typed<T: Copy + Send + Sync>(src: UnsafeSend<T>, dst: UnsafeMutSend<T>, len: usize) {
     let threads = rayon::current_num_threads();
-    let chunk_size = (len + threads - 1) / threads;
+    let chunk_size = len.div_ceil(threads);
 
     let src_addr = src.0 as usize;
     let dst_addr = dst.0 as usize;

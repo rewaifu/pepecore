@@ -72,7 +72,7 @@ pub fn svec_save<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), Sav
     }
 
     let (height, width, channel) = img.shape();
-    Ok(match channel {
+    match channel {
         Some(1) | None => match img.data {
             ImgData::F32(data) => {
                 let img: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::from_fn(width as u32, height as u32, |x, y| {
@@ -153,7 +153,8 @@ pub fn svec_save<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), Sav
         },
 
         _ => return Err(UnsupportedChannelSaveError(format!("{:?}", channel))),
-    })
+    };
+    Ok(())
 }
 
 fn save_jxl<P: AsRef<Path> + ?Sized>(img: SVec, path: &P) -> Result<(), SaveError> {
