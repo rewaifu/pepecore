@@ -8,4 +8,4 @@ publish = false
 
 [workspace.dependencies]
 pepecore-array = { path = "pepecore-array" }
-pepecore = { path = "pepecore" }
+pepecore = { path = "pepecore", features = ["encode"] }

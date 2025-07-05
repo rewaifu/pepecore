@@ -23,7 +23,6 @@ pub use jpeg_encoder::SamplingFactor as JpegSamplingFactor;
 pub struct JpegEncodeOptions {
     pub quality: u8,
     pub progressive: bool,
-    pub color_type: JpegColorType,
     pub sampling_factor: JpegSamplingFactor,
 }
 
@@ -38,7 +37,6 @@ impl JpegEncodeOptions {
         Self {
             quality: 100,
             progressive: true,
-            color_type: JpegColorType::Rgb,
             sampling_factor: JpegSamplingFactor::R_4_2_0,
         }
     }
@@ -49,10 +47,6 @@ impl JpegEncodeOptions {
 
     pub fn set_progressive(&mut self, progressive: bool) {
         self.progressive = progressive;
-    }
-
-    pub fn set_color_type(&mut self, color_type: JpegColorType) {
-        self.color_type = color_type;
     }
 
     pub fn set_sampling_factor(&mut self, sampling_factor: JpegSamplingFactor) {
@@ -80,7 +74,8 @@ impl Encoder {
         let color_type = match c {
             Some(4) => JpegColorType::Rgba,
             Some(3) => JpegColorType::Rgb,
-            _ => JpegColorType::Luma,
+            Some(1) => JpegColorType::Luma,
+            _ => unreachable!(),
         };
 
         encoder.encode(&img_data, w as u16, h as u16, color_type)?;

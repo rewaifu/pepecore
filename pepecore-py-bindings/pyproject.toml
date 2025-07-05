@@ -2,7 +2,7 @@
 name = "pepeline"
 dynamic = ["version"]
 description = "A high-speed framework for image processing."
-license = { file = "../LICENSE" }
+license = { file = "LICENSE" }
 readme = "README.md"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
