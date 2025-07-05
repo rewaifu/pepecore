@@ -74,7 +74,7 @@ impl Encoder {
         let color_type = match c {
             Some(4) => JpegColorType::Rgba,
             Some(3) => JpegColorType::Rgb,
-            Some(1) => JpegColorType::Luma,
+            Some(1) | None => JpegColorType::Luma,
             _ => unreachable!(),
         };
 
