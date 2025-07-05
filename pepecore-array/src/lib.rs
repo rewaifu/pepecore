@@ -1,4 +1,7 @@
 pub mod error;
+#[cfg(feature = "type-convert")]
+pub mod type_convert;
+#[cfg(not(feature = "type-convert"))]
 mod type_convert;
 
 use crate::error::Error;
