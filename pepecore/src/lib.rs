@@ -56,3 +56,5 @@ pub use ops::svec_ops::halftone::halftone::halftone;
 pub use ops::svec_ops::halftone::halftone::rotate_halftone;
 pub use ops::svec_ops::halftone::screentone::rotate_screentone;
 pub use ops::svec_ops::halftone::screentone::screentone;
+#[cfg(feature = "encode")]
+pub use ops::encode;
