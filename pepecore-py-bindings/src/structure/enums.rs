@@ -51,10 +51,10 @@ pub enum ColorCVT {
     RGB2BGR,
     BGR2RGB,
     Gray2RGB,
-    RGB2Bayer_BGGR ,
-RGB2Bayer_RGGB ,
-RGB2Bayer_GBRG,
-RGB2Bayer_GRBG,
+    RGB2Bayer_BGGR,
+    RGB2Bayer_RGGB,
+    RGB2Bayer_GBRG,
+    RGB2Bayer_GRBG,
 }
 
 impl From<ColorCVT> for CVTColor {
@@ -74,9 +74,9 @@ impl From<ColorCVT> for CVTColor {
             ColorCVT::RGB2BGR => CVTColor::RGB2BGR,
             ColorCVT::BGR2RGB => CVTColor::BGR2RGB,
             ColorCVT::Gray2RGB => CVTColor::Gray2RGB,
-            ColorCVT::RGB2Bayer_BGGR => CVTColor::RGB2Bayer_BGGR ,
-            ColorCVT::RGB2Bayer_RGGB => CVTColor::RGB2Bayer_RGGB ,
-            ColorCVT::RGB2Bayer_GBRG => CVTColor::RGB2Bayer_GBRG ,
+            ColorCVT::RGB2Bayer_BGGR => CVTColor::RGB2Bayer_BGGR,
+            ColorCVT::RGB2Bayer_RGGB => CVTColor::RGB2Bayer_RGGB,
+            ColorCVT::RGB2Bayer_GBRG => CVTColor::RGB2Bayer_GBRG,
             ColorCVT::RGB2Bayer_GRBG => CVTColor::RGB2Bayer_GRBG,
         }
     }

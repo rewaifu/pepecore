@@ -1,5 +1,5 @@
-use pepecore_array::{PixelType, SVec, Shape};
 use pepecore_array::error::Error;
+use pepecore_array::{PixelType, SVec, Shape};
 
 pub fn crop(img: &mut SVec, x: usize, y: usize, w: usize, h: usize) -> Result<(), Error> {
     let (img_h, img_w, opt_c) = img.shape.get_shape();

@@ -50,6 +50,7 @@ pub fn create_lut_rgb2ycbcr(
         lut_y_r, lut_y_g, lut_y_b, lut_cb_r, lut_cb_g, lut_cb_b, lut_cr_r, lut_cr_g, lut_cr_b,
     )
 }
+
 pub fn create_lut_ycbcr2rgb(r: f32, g: f32, b: f32) -> ([i16; 256], [i16; 256], [i16; 256], [i16; 256]) {
     let r_cr = 2.0 * (1.0 - r);
     let g_cb = -(r / g) * (2.0 * (1.0 - r));
@@ -72,6 +73,7 @@ pub fn create_lut_ycbcr2rgb(r: f32, g: f32, b: f32) -> ([i16; 256], [i16; 256], 
 
     (lut_r_cr, lut_g_cb, lut_g_cr, lut_b_cb)
 }
+
 pub fn create_lut_rgb2gray(r: f32, g: f32, b: f32) -> ([u8; 256], [u8; 256], [u8; 256]) {
     let mut lut_r = [0u8; 256];
     let mut lut_g = [0u8; 256];

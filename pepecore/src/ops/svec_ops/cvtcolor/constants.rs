@@ -2,6 +2,7 @@
 pub const KB_2020: f32 = 0.0593;
 pub const KR_2020: f32 = 0.2627;
 pub const KG_2020: f32 = 1f32 - KR_2020 - KB_2020;
+
 //Rec.601
 pub const KB_601: f32 = 0.114;
 pub const KR_601: f32 = 0.299;

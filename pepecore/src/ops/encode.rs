@@ -1,8 +1,10 @@
-use thiserror::Error;
-use pepecore_array::SVec;
 use crate::errors::DecodeError;
-use jpeg_encoder::{Encoder as JpegEncoder, ColorType as JpegColorType, EncodingError as JpegEncodingError, SamplingFactor as JpegSamplingFactor};
 use crate::ops::read::decode;
+use jpeg_encoder::{
+    ColorType as JpegColorType, Encoder as JpegEncoder, EncodingError as JpegEncodingError, SamplingFactor as JpegSamplingFactor,
+};
+use pepecore_array::SVec;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -57,7 +59,7 @@ impl JpegEncodeOptions {
     }
 }
 
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub struct Encoder;
 
 impl Encoder {
@@ -86,7 +88,7 @@ impl Encoder {
             JpegColorType::Luma => decode::img_gray_decode(&buffer),
             JpegColorType::Rgb => decode::img_rgb_decode(&buffer),
             JpegColorType::Rgba => decode::img_rgba_decode(&buffer),
-            _ => unreachable!()
+            _ => unreachable!(),
         }?;
 
         Ok(result)
