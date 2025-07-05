@@ -1,8 +1,6 @@
 use crate::errors::DecodeError;
 use crate::ops::read::decode;
-use jpeg_encoder::{
-    ColorType as JpegColorType, Encoder as JpegEncoder, EncodingError as JpegEncodingError, SamplingFactor as JpegSamplingFactor,
-};
+use jpeg_encoder::{Encoder as JpegEncoder, EncodingError as JpegEncodingError};
 use pepecore_array::SVec;
 use thiserror::Error;
 
@@ -17,6 +15,9 @@ pub enum Error {
     #[error(transparent)]
     JpegEncodingError(#[from] JpegEncodingError),
 }
+
+pub use jpeg_encoder::ColorType as JpegColorType;
+pub use jpeg_encoder::SamplingFactor as JpegSamplingFactor;
 
 #[derive(Debug)]
 pub struct JpegEncodeOptions {
