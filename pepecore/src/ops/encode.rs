@@ -39,7 +39,7 @@ impl JpegEncodeOptions {
             quality: 100,
             progressive: true,
             color_type: JpegColorType::Rgb,
-            sampling_factor: JpegSamplingFactor::F_4_2,
+            sampling_factor: JpegSamplingFactor::R_4_2_0,
         }
     }
 
