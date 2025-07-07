@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum ImgColor {
     GRAY,
     RGB,
@@ -6,7 +6,9 @@ pub enum ImgColor {
     GRAYA,
     DYNAMIC,
 }
+
 #[allow(non_camel_case_types)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum CVTColor {
     RGB2Gray_2020,
     RGB2Gray_601,
@@ -28,7 +30,7 @@ pub enum CVTColor {
     RGB2Bayer_GBRG,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum DotType {
     CIRCLE,
     CROSS,
