@@ -1,8 +1,12 @@
-use crate::structure::enums::{ColorCVT, DotTypePy};
+use crate::structure::enums::{ColorCVT, DotTypePy, ResizesAlg, ResizesFilter};
 use crate::structure::svec_traits::{PySvec, SvecPyArray};
+use fast_image_resize::{FilterType, ResizeAlg};
 use pepecore::cvt_color::cvt_color;
 use pepecore::enums::CVTColor;
-use pepecore::{color_levels, halftone, rotate_halftone, rotate_screentone, screentone};
+use pepecore::{
+    color_levels, halftone, rotate_halftone, rotate_screentone, screentone, ssaa_halftone, ssaa_rotate_halftone,
+    ssaa_rotate_screentone, ssaa_screentone,
+};
 use pepecore_array::PixelType;
 use pyo3::exceptions::PyValueError;
 use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
@@ -75,13 +79,15 @@ pub fn py_color_levels<'py>(
 }
 
 #[pyfunction(name = "screentone")]
-#[pyo3(signature = (img, dot_size, angle = None, dot_type = DotTypePy::CIRCLE))]
+#[pyo3(signature = (img, dot_size, angle = None, dot_type = DotTypePy::CIRCLE,scale = None, resize_alg=ResizesAlg::Conv(ResizesFilter::CatmullRom)))]
 pub fn py_screentone<'py>(
     py: Python<'py>,
     img: Bound<'py, PyAny>,
     dot_size: usize,
     angle: Option<f32>,
     dot_type: DotTypePy,
+    scale: Option<f32>,
+    resize_alg: ResizesAlg,
 ) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;
     let channels = img.shape.get_channels().unwrap_or(1);
@@ -92,9 +98,17 @@ pub fn py_screentone<'py>(
     }
 
     if let Some(angle) = angle {
-        py.allow_threads(|| rotate_screentone(&mut img, dot_size, angle, &dot_type.into()));
+        if let Some(scale) = scale {
+            py.allow_threads(|| ssaa_rotate_screentone(&mut img, dot_size, angle, &dot_type.into(), scale, resize_alg.into()));
+        } else {
+            py.allow_threads(|| rotate_screentone(&mut img, dot_size, angle, &dot_type.into()));
+        }
     } else {
-        py.allow_threads(|| screentone(&mut img, dot_size, &dot_type.into()));
+        if let Some(scale) = scale {
+            py.allow_threads(|| ssaa_screentone(&mut img, dot_size, &dot_type.into(), scale, resize_alg.into()));
+        } else {
+            py.allow_threads(|| screentone(&mut img, dot_size, &dot_type.into()));
+        }
     }
 
     Ok(match img.pixel_type() {
@@ -105,22 +119,34 @@ pub fn py_screentone<'py>(
 }
 
 #[pyfunction(name = "halftone")]
-#[pyo3(signature = (img, dot_sizes, angles = None, dot_types = None))]
+#[pyo3(signature = (img, dot_sizes, angles = None, dot_types = None,scale = None, resize_alg=ResizesAlg::Conv(ResizesFilter::CatmullRom)))]
 pub fn py_halftone<'py>(
     py: Python<'py>,
     img: Bound<'py, PyAny>,
     dot_sizes: Vec<usize>,
     angles: Option<Vec<f32>>,
     dot_types: Option<Vec<DotTypePy>>,
+    scale: Option<f32>,
+    resize_alg: ResizesAlg,
 ) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;
     let dot_types = dot_types.unwrap_or_else(|| vec![DotTypePy::CIRCLE; dot_sizes.len()]);
     let dot_types: Vec<_> = dot_types.into_iter().map(|d| d.into()).collect();
 
     if let Some(angles) = angles {
-        py.allow_threads(|| rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types).unwrap());
+        if let Some(scale) = scale {
+            py.allow_threads(|| {
+                ssaa_rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types, scale, resize_alg.into()).unwrap()
+            });
+        } else {
+            py.allow_threads(|| rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types).unwrap());
+        }
     } else {
-        py.allow_threads(|| halftone(&mut img, &dot_sizes, &dot_types).unwrap());
+        if let Some(scale) = scale {
+            py.allow_threads(|| ssaa_halftone(&mut img, &dot_sizes, &dot_types, scale, resize_alg.into()).unwrap());
+        } else {
+            py.allow_threads(|| halftone(&mut img, &dot_sizes, &dot_types).unwrap());
+        }
     }
 
     Ok(match img.pixel_type() {
