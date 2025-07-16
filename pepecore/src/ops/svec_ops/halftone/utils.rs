@@ -1,13 +1,19 @@
-pub fn rotate_pixel_coordinates(x: f32, y: f32, center_y: f32, center_x: f32, cos_theta: f32, sin_theta: f32) -> (usize, usize) {
-    let x_rel = x - center_x;
-    let y_rel = y - center_y;
+pub fn rotate_pixel_coordinates(x: f32, y: f32, w: f32, h: f32, cos: f32, sin: f32) -> (f32, f32) {
+    let cx = w / 2.0;
+    let cy = h / 2.0;
 
-    let rotated_x = (cos_theta * x_rel - sin_theta * y_rel + center_x) as usize;
-    let rotated_y = (sin_theta * x_rel + cos_theta * y_rel + center_y) as usize;
+    let dx = x - cx;
+    let dy = y - cy;
 
-    (rotated_x, rotated_y)
+    let rx = cos * dx - sin * dy + cx;
+    let ry = sin * dx + cos * dy + cy;
+
+    (rx, ry)
 }
-
+pub fn wrap_index(v: i32, size: usize) -> usize {
+    let s = size as i32;
+    ((v % s + s) % s) as usize
+}
 pub fn compute_cos_sin(theta: f32) -> [f32; 2] {
     let cos_theta = theta.cos();
     let sin_theta = theta.sin();
