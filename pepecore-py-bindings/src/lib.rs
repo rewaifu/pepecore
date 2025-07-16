@@ -8,6 +8,7 @@ use pyo3::prelude::*;
 #[pymodule]
 fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::read_write::read, m)?)?;
+    m.add_function(wrap_pyfunction!(ops::read_write::buff_read, m)?)?;
     m.add_function(wrap_pyfunction!(ops::read_write::save, m)?)?;
     m.add_function(wrap_pyfunction!(ops::colors::py_cvt_color, m)?)?;
     m.add_function(wrap_pyfunction!(ops::crop::py_crop, m)?)?;
