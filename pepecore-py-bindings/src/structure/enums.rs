@@ -1,7 +1,7 @@
+use fast_image_resize::{FilterType, ResizeAlg};
 use pepecore::enums::ImgColor;
 use pepecore::enums::{CVTColor, DotType};
 use pyo3::pyclass;
-
 #[pyclass(name = "ImgColor")]
 #[derive(Clone, Copy)]
 pub enum ColorMode {
@@ -112,4 +112,47 @@ pub enum TypeNoise {
     OPENSIMPLEX = 2,
     SUPERSIMPLEX = 3,
     PERLINSURFLET = 4,
+}
+#[derive(Clone)]
+#[pyclass]
+pub enum ResizesFilter {
+    Box,
+    Bilinear,
+    Hamming,
+    CatmullRom,
+    Mitchell,
+    Gaussian,
+    Lanczos3,
+}
+#[derive(Clone)]
+#[pyclass]
+pub enum ResizesAlg {
+    Nearest(),
+    Conv(ResizesFilter),
+    Interpolation(ResizesFilter),
+    SuperSampling(ResizesFilter, u8),
+}
+
+impl From<ResizesFilter> for FilterType {
+    fn from(value: ResizesFilter) -> Self {
+        match value {
+            ResizesFilter::Box => FilterType::Box,
+            ResizesFilter::Bilinear => FilterType::Bilinear,
+            ResizesFilter::Hamming => FilterType::Hamming,
+            ResizesFilter::CatmullRom => FilterType::CatmullRom,
+            ResizesFilter::Mitchell => FilterType::Mitchell,
+            ResizesFilter::Gaussian => FilterType::Gaussian,
+            ResizesFilter::Lanczos3 => FilterType::Lanczos3,
+        }
+    }
+}
+impl From<ResizesAlg> for ResizeAlg {
+    fn from(value: ResizesAlg) -> Self {
+        match value {
+            ResizesAlg::Nearest() => ResizeAlg::Nearest,
+            ResizesAlg::Conv(filter) => ResizeAlg::Convolution(filter.into()),
+            ResizesAlg::Interpolation(filter) => ResizeAlg::Interpolation(filter.into()),
+            ResizesAlg::SuperSampling(filter, sampling) => ResizeAlg::SuperSampling(filter.into(), sampling),
+        }
+    }
 }

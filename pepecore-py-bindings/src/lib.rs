@@ -1,7 +1,7 @@
 mod ops;
 mod structure;
 
-use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat, TypeNoise};
+use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat, TypeNoise,ResizesFilter,ResizesAlg};
 
 use pyo3::prelude::*;
 
@@ -22,5 +22,7 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ColorCVT>()?;
     m.add_class::<DotTypePy>()?;
     m.add_class::<TypeNoise>()?;
+    m.add_class::<ResizesFilter>()?;
+    m.add_class::<ResizesAlg>()?;
     Ok(())
 }

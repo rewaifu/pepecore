@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Sequence, Union
 from enum import IntEnum
 from pathlib import Path
 
@@ -60,7 +60,41 @@ class TypeNoise(Enum):
 
     def __reduce__(self): ...
 
+class ResizesFilter(Enum):
+    Box =0
+    Bilinear = 1
+    Hamming = 2
+    CatmullRom = 3
+    Mitchell = 4
+    Gaussian = 5
+    Lanczos3 = 6
+
+    def __reduce__(self): ...
+class ResizesFilter(Enum):
+    Box =0
+    Bilinear = 1
+    Hamming = 2
+    CatmullRom = 3
+    Mitchell = 4
+    Gaussian = 5
+    Lanczos3 = 6
+
+    def __reduce__(self): ...
+
+class ResizesAlg:
+    @staticmethod
+    def Nearest() -> "ResizesAlg": ...
+
+    @staticmethod
+    def Conv(filter: ResizesFilter) -> "ResizesAlg": ...
+
+    @staticmethod
+    def Interpolation(filter: ResizesFilter) -> "ResizesAlg": ...
+
+    @staticmethod
+    def SuperSampling(filter: ResizesFilter, passes: int) -> "ResizesAlg": ...
 def read(path: str | Path, color_mode: ImgColor = ..., img_format: ImgFormat = ...) -> np.ndarray: ...
+def buff_read(buffer: Union[bytes, bytearray, memoryview], color_mode: ImgColor = ..., img_format: ImgFormat = ...) -> np.ndarray: ...
 def save(img: np.ndarray, path: str | Path): ...
 def cvt_color(img: np.ndarray, cvt_mode: CVTColor): ...
 def crop(img: np.ndarray, x: int, y: int, w: int, h: int) -> np.ndarray: ...
@@ -72,12 +106,13 @@ def color_levels(
     out_high: int | None = 255,
     gamma: float | None = 1.0,
 ) -> np.ndarray: ...
-def screentone(img: np.ndarray, dot_size: int, angle: int | None = 0, dot_type: DotType | None = ...) -> np.ndarray: ...
+def screentone(img: np.ndarray, dot_size: int, angle: int | None = 0, dot_type: DotType | None = ...,scale:float | None = None,resize_alg: ResizesAlg = ResizesAlg.Conv(ResizesFilter.CatmullRom)) -> np.ndarray: ...
 def halftone(
     img: np.ndarray,
     dot_sizes: Sequence[int],
     angles: Sequence[float] | None = None,
     dot_types: Sequence[DotType] | None = None,
+        scale:float | None = None,resize_alg: ResizesAlg = ResizesAlg.Conv(ResizesFilter.CatmullRom
 ) -> np.ndarray: ...
 def best_tile(img: np.ndarray, tile_size: int) -> np.ndarray: ...
 def noise_generate(
@@ -104,4 +139,8 @@ __all__ = [
     "read",
     "save",
     "screentone",
+    "buff_read",
+    "ResizesAlg",
+    "ResizesFilter"
+
 ]
