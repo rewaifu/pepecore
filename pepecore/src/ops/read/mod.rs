@@ -1,2 +1,2 @@
-mod decode;
+pub(crate) mod decode;
 pub mod read;

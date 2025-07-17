@@ -8,7 +8,7 @@ use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
 
 #[pyfunction]
 #[pyo3(signature = (path, color_mode = ColorMode::DYNAMIC, img_format =  ImgFormat::DYNAMIC))]
-pub fn read<'py>(py: Python<'py>, path: String, color_mode: ColorMode, img_format: ImgFormat) -> PyResult<Bound<'py, PyAny>> {
+pub fn read(py: Python<'_>, path: String, color_mode: ColorMode, img_format: ImgFormat) -> PyResult<Bound<'_, PyAny>> {
     let img = py.allow_threads(|| match img_format {
         ImgFormat::F32 => {
             let mut buff = read_in_path(&*path, ImgColor::from(color_mode)).unwrap();

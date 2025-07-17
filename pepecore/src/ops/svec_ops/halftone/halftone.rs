@@ -27,7 +27,7 @@ use crate::ops::svec_ops::halftone::utils::{HalftonePixel, compute_cos_sin, rota
 use pepecore_array::{PixelType, SVec};
 use std::fmt::Debug;
 use fast_image_resize::ResizeAlg;
-use array::Shape;
+use crate::array::Shape;
 use crate::ops::svec_ops::resize::fir::ResizeSVec;
 
 /// Apply a standard (non-rotated) halftone to the image.

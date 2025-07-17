@@ -6,3 +6,6 @@ publish.workspace = true
 
 [dependencies]
 thiserror = "2.0.12"
+
+[features]
+type-convert = []

@@ -54,7 +54,7 @@ pub fn psd_din_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
 
     let (height, width) = decode_size_psd(size_bites);
-    Ok(if &buffer[23] == &16 {
+    Ok(if buffer[23] == 16 {
         SVec::new(
             Shape::new(height as usize, width as usize, channels),
             ImgData::U16(unsafe {
@@ -87,7 +87,7 @@ pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let (height, width) = decode_size_psd(size_bites);
     Ok(SVec::new(
         Shape::new(height as usize, width as usize, Some(3)),
-        if &buffer[23] == &16 {
+        if buffer[23] == 16 {
             ImgData::U16(if channels == 3 {
                 unsafe {
                     let len = px.len() / 2;
@@ -119,19 +119,17 @@ pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
             } else {
                 return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             })
-        } else {
-            if channels == 3 {
-                ImgData::U8(px)
-            } else if channels == 1 {
-                let mut rgb_values = Vec::with_capacity(px.len() * 3);
+        } else if channels == 3 {
+            ImgData::U8(px)
+        } else if channels == 1 {
+            let mut rgb_values = Vec::with_capacity(px.len() * 3);
 
-                for gray in &px {
-                    rgb_values.extend([*gray, *gray, *gray].iter().copied());
-                }
-                ImgData::U8(rgb_values)
-            } else {
-                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+            for gray in &px {
+                rgb_values.extend([*gray, *gray, *gray].iter().copied());
             }
+            ImgData::U8(rgb_values)
+        } else {
+            return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
         },
     ))
 }
@@ -148,7 +146,7 @@ pub fn psd_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let (height, width) = decode_size_psd(size_bites);
     Ok(SVec::new(
         Shape::new(height as usize, width as usize, Some(4)),
-        if &buffer[23] == &16 {
+        if buffer[23] == 16 {
             ImgData::U16(if channels == 3 {
                 unsafe {
                     let len = px.len() / 2;
@@ -184,27 +182,25 @@ pub fn psd_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
             } else {
                 return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             })
-        } else {
-            if channels == 3 {
-                let mut vec = Vec::with_capacity((height * width * 4) as usize);
-                for i in 0..px.len() / 3 {
-                    // Добавляем три элемента из старого вектора
-                    vec.push(vec[i * 3]);
-                    vec.push(vec[i * 3 + 1]);
-                    vec.push(vec[i * 3 + 2]);
-                    vec.push(u8::MAX);
-                }
-                ImgData::U8(vec)
-            } else if channels == 1 {
-                let mut rgb_values = Vec::with_capacity(px.len() * 4);
-
-                for gray in &px {
-                    rgb_values.extend([*gray, *gray, *gray, u8::MAX].iter().copied());
-                }
-                ImgData::U8(rgb_values)
-            } else {
-                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+        } else if channels == 3 {
+            let mut vec = Vec::with_capacity((height * width * 4) as usize);
+            for i in 0..px.len() / 3 {
+                // Добавляем три элемента из старого вектора
+                vec.push(vec[i * 3]);
+                vec.push(vec[i * 3 + 1]);
+                vec.push(vec[i * 3 + 2]);
+                vec.push(u8::MAX);
             }
+            ImgData::U8(vec)
+        } else if channels == 1 {
+            let mut rgb_values = Vec::with_capacity(px.len() * 4);
+
+            for gray in &px {
+                rgb_values.extend([*gray, *gray, *gray, u8::MAX].iter().copied());
+            }
+            ImgData::U8(rgb_values)
+        } else {
+            return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
         },
     ))
 }
@@ -221,7 +217,7 @@ pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let (height, width) = decode_size_psd(size_bites);
     Ok(SVec::new(
         Shape::new(height as usize, width as usize, None),
-        if &buffer[23] == &16 {
+        if buffer[23] == 16 {
             ImgData::U16(if channels == 3 {
                 unsafe {
                     let len = px.len() / 6; // Так как каждый пиксель состоит из 3 компонентов, каждый по 2 байта
@@ -267,19 +263,17 @@ pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
             } else {
                 return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             })
-        } else {
-            if channels == 1 {
-                ImgData::U8(px)
-            } else if channels == 3 {
-                let mut values = Vec::with_capacity(px.len() / 3);
+        } else if channels == 1 {
+            ImgData::U8(px)
+        } else if channels == 3 {
+            let mut values = Vec::with_capacity(px.len() / 3);
 
-                for rgb in px.chunks(3) {
-                    values.push((rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8);
-                }
-                ImgData::U8(values)
-            } else {
-                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+            for rgb in px.chunks(3) {
+                values.push((rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8);
             }
+            ImgData::U8(values)
+        } else {
+            return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
         },
     ))
 }
@@ -296,7 +290,7 @@ pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
     let (height, width) = decode_size_psd(size_bites);
     Ok(SVec::new(
         Shape::new(height as usize, width as usize, Some(2)),
-        if &buffer[23] == &16 {
+        if buffer[23] == 16 {
             ImgData::U16(if channels == 3 {
                 unsafe {
                     let len = px.len() / 3; // Так как каждый пиксель состоит из 3 компонентов, каждый по 2 байта
@@ -344,20 +338,18 @@ pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
             } else {
                 return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
             })
-        } else {
-            if channels == 1 {
-                ImgData::U8(px.iter().flat_map(|&x| vec![x, u8::MAX]).collect())
-            } else if channels == 3 {
-                let mut values = Vec::with_capacity(px.len() / 3);
+        } else if channels == 1 {
+            ImgData::U8(px.iter().flat_map(|&x| vec![x, u8::MAX]).collect())
+        } else if channels == 3 {
+            let mut values = Vec::with_capacity(px.len() / 3);
 
-                for rgb in px.chunks(3) {
-                    values.push((rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8);
-                    values.push(u8::MAX)
-                }
-                ImgData::U8(values)
-            } else {
-                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+            for rgb in px.chunks(3) {
+                values.push((rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8);
+                values.push(u8::MAX)
             }
+            ImgData::U8(values)
+        } else {
+            return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
         },
     ))
 }

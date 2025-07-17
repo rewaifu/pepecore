@@ -18,6 +18,7 @@ pub fn rgb_to_gray_u8(img: &mut SVec, r: f32, g: f32, b: f32) {
     }
     img.truncate(num_pixels).unwrap()
 }
+
 pub fn rgb_to_ycbcr_u8(img: &mut SVec, r: f32, g: f32, b: f32) {
     let (lut_y_r, lut_y_g, lut_y_b, lut_cb_r, lut_cb_g, lut_cb_b, lut_cr_r, lut_cr_g, lut_cr_b) = create_lut_rgb2ycbcr(r, g, b);
     let (_, _, c) = img.shape();
@@ -38,6 +39,7 @@ pub fn rgb_to_ycbcr_u8(img: &mut SVec, r: f32, g: f32, b: f32) {
         }
     }
 }
+
 pub fn ycbcr_to_rgb_u8(img: &mut SVec, r: f32, g: f32, b: f32) {
     let (lut_r_cr, lut_g_cb, lut_g_cr, lut_b_cb) = create_lut_ycbcr2rgb(r, g, b);
     let (_, _, c) = img.shape();
@@ -58,6 +60,7 @@ pub fn ycbcr_to_rgb_u8(img: &mut SVec, r: f32, g: f32, b: f32) {
         }
     }
 }
+
 pub fn rgb_to_cmyk_u8(img: &mut SVec) {
     let (height, width, c) = img.shape();
     assert_eq!(c, Some(3));
@@ -89,6 +92,7 @@ pub fn rgb_to_cmyk_u8(img: &mut SVec) {
 
     img.data = ImgData::U8(buff_vec);
 }
+
 pub fn cmyk_to_rgb_u8(img: &mut SVec) {
     let (height, width, c) = img.shape();
     assert_eq!(c, Some(4));

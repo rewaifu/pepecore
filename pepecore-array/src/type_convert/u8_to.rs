@@ -43,7 +43,7 @@ unsafe fn convert_simd_avx2_normalized_u8_to_f32(input: &mut SVec) {
             let v3 = _mm256_div_ps(_mm256_cvtepi32_ps(hi32_1), max_val);
 
             // Сохраняем подряд 32 значения f32
-            _mm256_storeu_ps(out_ptr.add(i + 0) as *mut f32, v0);
+            _mm256_storeu_ps(out_ptr.add(i) as *mut f32, v0);
             _mm256_storeu_ps(out_ptr.add(i + 8) as *mut f32, v1);
             _mm256_storeu_ps(out_ptr.add(i + 16) as *mut f32, v2);
             _mm256_storeu_ps(out_ptr.add(i + 24) as *mut f32, v3);
