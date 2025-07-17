@@ -115,14 +115,15 @@ fn apply_ssaa_screentone<T: HalftonePixel>(img: &mut SVec, dot_size: usize, dot_
     let ly_bias = dot_size / 2;
     let dot_size = dot_size * 2;
     let dot_matrix_converted = T::prepare_dot_matrix(dot_matrix_data);
-    
-    let x_in_tab: Vec<usize> = (0..(w as f32 *scale)as usize)
-        .map(|x| ((scale*0.5 +  x  as f32/ scale) as usize).min(w-1))
+
+    let x_in_tab: Vec<usize> = (0..(w as f32 * scale) as usize)
+        .map(|x| ((x as f32 / scale).round() as usize).min(w - 1))
         .collect();
-    let y_in_tab: Vec<usize> = (0..(h as f32*scale) as usize)
-        .map(|x| ((scale*0.5 +  x as f32/ scale) as usize).min(h-1))
+    let y_in_tab: Vec<usize> = (0..(h as f32 * scale) as usize)
+        .map(|y| ((y as f32 / scale).round() as usize).min(h - 1))
         .collect();
-    let mut new_vec:Vec<T> = Vec::new();
+
+    let mut new_vec:Vec<T> = Vec::with_capacity((h as f32 *scale) as usize*(w as f32 *scale) as usize);
     for (ly, y) in y_in_tab.iter().enumerate(){
         let ly2 = (ly + ly_bias) % dot_size;
 
@@ -155,13 +156,14 @@ fn apply_rotate_ssaa_screentone<T: HalftonePixel>(img: &mut SVec, dot_size: usiz
     let dot_matrix_converted = T::prepare_dot_matrix(dot_matrix_data);
     let cos_sin = compute_cos_sin(angle.to_radians());
 
-    let x_in_tab: Vec<usize> = (0..(w as f32 *scale)as usize)
-        .map(|x| ((scale*0.5 +  x  as f32/ scale) as usize).min(w-1))
+    let x_in_tab: Vec<usize> = (0..(w as f32 * scale) as usize)
+        .map(|x| ((x as f32 / scale).round() as usize).min(w - 1))
         .collect();
-    let y_in_tab: Vec<usize> = (0..(h as f32*scale) as usize)
-        .map(|x| ((scale*0.5 +  x as f32/ scale) as usize).min(h-1))
+    let y_in_tab: Vec<usize> = (0..(h as f32 * scale) as usize)
+        .map(|y| ((y as f32 / scale).round() as usize).min(h - 1))
         .collect();
-    let mut new_vec:Vec<T> = Vec::new();
+
+    let mut new_vec:Vec<T> = Vec::with_capacity((h as f32 *scale) as usize*(w as f32 *scale) as usize);
     for (ly, y) in y_in_tab.iter().enumerate(){
         let ly2 = ly + ly_bias;
 
