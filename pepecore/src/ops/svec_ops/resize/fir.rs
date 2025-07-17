@@ -37,6 +37,10 @@ fn replace_vec_f32_from_bytes(vec: &mut Vec<f32>, bytes: &[u8]) {
 impl ResizeSVec for SVec {
     fn resize(&mut self,h:usize, w:usize,resize_alg: ResizeAlg, alpha:bool) {
         let mut resizer = Resizer::new();
+        #[cfg(target_arch = "x86_64")]
+        unsafe {
+            resizer.set_cpu_extensions(fast_image_resize::CpuExtensions::Avx2);
+        }
         match self.pixel_type(){
             PixelType::F32=>{
                 let (h_s,w_s,c_s) = self.shape.get_shape();
