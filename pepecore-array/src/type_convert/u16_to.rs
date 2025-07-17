@@ -23,7 +23,7 @@ unsafe fn convert_simd_avx2_u16_to_f32(input: &mut SVec) {
             let v0 = _mm256_div_ps(_mm256_cvtepi32_ps(lo), div);
             let v1 = _mm256_div_ps(_mm256_cvtepi32_ps(hi), div);
 
-            _mm256_storeu_ps(out_ptr.add(i + 0), v0);
+            _mm256_storeu_ps(out_ptr.add(i), v0);
             _mm256_storeu_ps(out_ptr.add(i + 8), v1);
             i += 16;
         }

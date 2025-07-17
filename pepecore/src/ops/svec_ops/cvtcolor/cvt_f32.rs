@@ -15,6 +15,7 @@ pub fn rgb_to_gray_f32(img: &mut SVec, r: f32, g: f32, b: f32) {
     }
     img.truncate(num_pixels).unwrap()
 }
+
 pub fn get_crg_cbg(r: f32, g: f32, b: f32) -> (f32, f32, f32, f32) {
     let ke = 0.5 / (1.0 - r);
     let kd = 0.5 / (1.0 - b);
@@ -22,6 +23,7 @@ pub fn get_crg_cbg(r: f32, g: f32, b: f32) -> (f32, f32, f32, f32) {
     let cbg = -(b / g) * kd;
     (1.0 / ke, 1.0 / kd, crg, cbg)
 }
+
 pub fn ycbcr_to_rgb_f32(img: &mut SVec, r: f32, g: f32, b: f32) {
     let len = img.get_len();
     let (_, _, c) = img.shape();
@@ -42,6 +44,7 @@ pub fn ycbcr_to_rgb_f32(img: &mut SVec, r: f32, g: f32, b: f32) {
         }
     }
 }
+
 pub fn rgb_to_ycbcr_f32(img: &mut SVec, r: f32, g: f32, b: f32) {
     let len = img.get_len();
     let (_, _, c) = img.shape();
@@ -96,6 +99,7 @@ pub fn rgb_to_cmyk_f32(img: &mut SVec) {
 
     img.data = ImgData::F32(buff_vec);
 }
+
 pub fn cmyk_to_rgb_f32(img: &mut SVec) {
     let (height, width, c) = img.shape();
     assert_eq!(c, Some(4));

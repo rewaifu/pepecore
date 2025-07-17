@@ -58,7 +58,7 @@ jobs:
           path: pepecore-py-bindings/dist
 
   python-sdist:
-    name: Build and upload sdist
+    name: Build Python (sdist)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,24 +68,26 @@ jobs:
         with:
           python-version: '3.10'
   
-      - name: Build sdist
+      - name: Maturin build (sdist)
         uses: PyO3/maturin-action@v1
         with:
+          command: sdist
           working-directory: pepecore-py-bindings
-          args: --sdist --out dist
+          args: -o dist
   
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
+          if-no-files-found: error
           name: sdist
-          path: dist/*.tar.gz
+          path: pepecore-py-bindings/dist/*.tar.gz
 
   python-linux:
     name: Build Python (Linux)
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ x86_64, x86, aarch64, armv7, s390x, ppc64le ]
+        target: [ x86_64, x86, aarch64 ]
     steps:
       - uses: actions/checkout@v4
   

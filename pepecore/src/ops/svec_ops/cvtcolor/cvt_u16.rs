@@ -16,6 +16,7 @@ pub fn rgb_to_gray_u16(img: &mut SVec, r: f32, g: f32, b: f32) {
     }
     img.truncate(num_pixels).unwrap()
 }
+
 pub fn get_crg_cbg(r: f32, g: f32, b: f32) -> (f32, f32, f32, f32) {
     let ke = 0.5 / (1.0 - r);
     let kd = 0.5 / (1.0 - b);
@@ -23,7 +24,9 @@ pub fn get_crg_cbg(r: f32, g: f32, b: f32) -> (f32, f32, f32, f32) {
     let cbg = -(b / g) * kd;
     (1.0 / ke, 1.0 / kd, crg, cbg)
 }
+
 const U16_HALF: f32 = u16::MAX as f32 / 2.0;
+
 pub fn ycbcr_to_rgb_u16(img: &mut SVec, r: f32, g: f32, b: f32) {
     let len = img.get_len();
     let ptr = img.get_mut_ptr::<u16>().unwrap();
@@ -62,7 +65,9 @@ pub fn rgb_to_ycbcr_u16(img: &mut SVec, r: f32, g: f32, b: f32) {
         }
     }
 }
+
 const U16_MAX_F32: f32 = u16::MAX as f32;
+
 pub fn rgb_to_cmyk_u16(img: &mut SVec) {
     let (height, width, _) = img.shape();
     img.shape = Shape::new(height, width, Some(4));
@@ -93,6 +98,7 @@ pub fn rgb_to_cmyk_u16(img: &mut SVec) {
 
     img.data = ImgData::U16(buff_vec);
 }
+
 pub fn cmyk_to_rgb_u16(img: &mut SVec) {
     let (height, width, _) = img.shape();
     img.shape = Shape::new(height, width, Some(3));

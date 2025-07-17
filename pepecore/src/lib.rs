@@ -39,7 +39,7 @@
 //! save::svec_save(img, "output.png").unwrap();
 //! ```
 
-extern crate pepecore_array as array;
+pub use pepecore_array as array;
 
 pub mod enums;
 pub mod errors;
@@ -49,10 +49,10 @@ pub mod ops;
 pub use ops::read::read;
 pub use ops::save::save;
 
+#[cfg(feature = "encode")]
+pub use ops::encode;
 pub use ops::svec_ops::color_levels;
 pub use ops::svec_ops::crop::crop;
 pub use ops::svec_ops::cvtcolor::cvt_color;
-pub use ops::svec_ops::halftone::halftone::halftone;
-pub use ops::svec_ops::halftone::halftone::rotate_halftone;
-pub use ops::svec_ops::halftone::screentone::rotate_screentone;
-pub use ops::svec_ops::halftone::screentone::screentone;
+pub use ops::svec_ops::halftone::halftone::{halftone,rotate_halftone,ssaa_halftone,ssaa_rotate_halftone};
+pub use ops::svec_ops::halftone::screentone::{rotate_screentone,screentone,ssaa_rotate_screentone,ssaa_screentone};

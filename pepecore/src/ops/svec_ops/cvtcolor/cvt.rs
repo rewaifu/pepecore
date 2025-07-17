@@ -29,6 +29,7 @@ pub fn rgb_to_bgr(img: &mut SVec) {
         }
     }
 }
+
 pub fn gray_to_rgb(img: &mut SVec) {
     let (h, w, c) = img.shape();
     assert_eq!(c, None);
@@ -55,20 +56,22 @@ pub fn gray_to_rgb(img: &mut SVec) {
     }
     img.drain(0..h * w).unwrap()
 }
+
 fn process_bayer_line<T: Copy>(ptr: *mut T, w: usize, h: usize, pattern: [usize; 4]) {
     unsafe {
         for y in 0..h {
-            let (index_a, index_b) = if y % 2 == 0 {
-                (pattern[0], pattern[1])
-            } else {
-                (pattern[2], pattern[3])
-            };
-
-            let mut index = y.unchecked_mul(w);
             for x in 0..w {
-                index += 1;
-                let idx = if x % 2 == 0 { index_a } else { index_b };
-                *ptr.add(index) = *ptr.add(index.unchecked_mul(3).unchecked_add(idx));
+                let idx = match (y % 2, x % 2) {
+                    (0, 0) => pattern[0],
+                    (0, 1) => pattern[1],
+                    (1, 0) => pattern[2],
+                    (1, 1) => pattern[3],
+                    _ => unreachable!(),
+                };
+
+                let offset = y * w + x;
+                let rgb_offset = offset * 3 + idx;
+                *ptr.add(offset) = *ptr.add(rgb_offset);
             }
         }
     }
