@@ -141,13 +141,13 @@ where
         double_sizes.push(doubled);
         dot_matrices.push(matrix);
     }
-    let x_in_tab: Vec<usize> = (0..(width as f32 *scale)as usize)
-        .map(|x| ((scale*0.5 +  x  as f32/ scale) as usize).min(width-1))
+    let x_in_tab: Vec<usize> = (0..(width as f32 * scale) as usize)
+        .map(|x| ((x as f32 / scale).round() as usize).min(width - 1))
         .collect();
-    let y_in_tab: Vec<usize> = (0..(height as f32*scale) as usize)
-        .map(|x| ((scale*0.5 +  x as f32/ scale) as usize).min(height-1))
+    let y_in_tab: Vec<usize> = (0..(height as f32 * scale) as usize)
+        .map(|y| ((y as f32 / scale).round() as usize).min(height - 1))
         .collect();
-    let mut new_vec:Vec<T> = Vec::new();
+    let mut new_vec:Vec<T> =  Vec::with_capacity((height as f32 *scale) as usize*(width as f32 *scale) as usize*channels);
     // Apply thresholding per pixel and channel
     for (ly, y) in y_in_tab.iter().enumerate(){
         for (lx,x) in x_in_tab.iter().enumerate(){
@@ -302,13 +302,13 @@ where
         dot_matrices.push(matrix);
         cos_sin.push(compute_cos_sin(angles[i].to_radians()));
     }
-    let x_in_tab: Vec<usize> = (0..(width as f32 *scale)as usize)
-        .map(|x| ((scale*0.5 +  x  as f32/ scale) as usize).min(width-1))
+    let x_in_tab: Vec<usize> = (0..(width as f32 * scale) as usize)
+        .map(|x| ((x as f32 / scale).round() as usize).min(width - 1))
         .collect();
-    let y_in_tab: Vec<usize> = (0..(height as f32*scale) as usize)
-        .map(|x| ((scale*0.5 +  x as f32/ scale) as usize).min(height-1))
+    let y_in_tab: Vec<usize> = (0..(height as f32 * scale) as usize)
+        .map(|y| ((y as f32 / scale).round() as usize).min(height - 1))
         .collect();
-    let mut new_vec:Vec<T> = Vec::new();
+    let mut new_vec:Vec<T> =  Vec::with_capacity((height as f32 *scale) as usize*(width as f32 *scale) as usize*channels);
     // Apply rotated halftone per pixel and channel
     for (ly,y) in y_in_tab.iter().enumerate(){
         for (lx,x) in x_in_tab.iter().enumerate(){
