@@ -20,7 +20,7 @@
 //! ```
 
 use fast_image_resize::ResizeAlg;
-use array::Shape;
+use crate::array::Shape;
 use crate::enums::DotType;
 use crate::ops::svec_ops::halftone::dot::dot_create;
 use crate::ops::svec_ops::halftone::utils::{HalftonePixel, compute_cos_sin, rotate_pixel_coordinates, wrap_index};

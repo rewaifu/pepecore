@@ -1,7 +1,7 @@
 use fast_image_resize::images::{Image, ImageRef,};
 use fast_image_resize::{ ResizeAlg, ResizeOptions, Resizer};
 use image::{EncodableLayout};
-use array::{PixelType, SVec, Shape};
+use crate::array::{PixelType, SVec, Shape};
 
 pub trait ResizeSVec{
     fn resize(&mut self,h:usize, w:usize,resize_alg: ResizeAlg, alpha:bool);
