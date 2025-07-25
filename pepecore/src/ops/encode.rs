@@ -78,7 +78,7 @@ impl Encoder {
             _ => unreachable!(),
         };
 
-        encoder.encode(&img_data, w as u16, h as u16, color_type)?;
+        encoder.encode(img_data, w as u16, h as u16, color_type)?;
 
         let result = match color_type {
             JpegColorType::Luma => decode::img_gray_decode(&buffer),
