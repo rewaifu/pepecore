@@ -26,6 +26,7 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::encode::py_jpeg_encode, m)?)?;
     m.add_function(wrap_pyfunction!(ops::resize::py_resize, m)?)?;
     m.add_function(wrap_pyfunction!(rm, m)?)?;
+    m.add_function(wrap_pyfunction!(ops::normalize::normalize, m)?)?;
     m.add_class::<ColorMode>()?;
     m.add_class::<ImgFormat>()?;
     m.add_class::<ColorCVT>()?;

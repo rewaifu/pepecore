@@ -129,6 +129,7 @@ class JpegSamplingFactor(IntEnum):
 def jpeg_encode(img: np.ndarray, quality: int = 100, progressive: bool = True, sampling_factor: JpegSamplingFactor = ...) -> np.ndarray: ...
 def resize(img: np.ndarray, h: int, w: int, resize_alg: ResizesAlg = ..., alpha: bool = True) -> np.ndarray: ...
 def rayon_mode(on:bool = True) -> None:...
+def normalize(img: np.ndarray, scale: float) -> np.ndarray: ...
 __all__ = [
     'CVTColor',
     'DotType',
@@ -150,4 +151,5 @@ __all__ = [
     'save',
     'screentone',
     'rayon_mode',
+    'normalize'
 ]

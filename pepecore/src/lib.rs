@@ -58,3 +58,4 @@ pub use ops::svec_ops::crop::crop;
 pub use ops::svec_ops::cvtcolor::cvt_color;
 pub use ops::svec_ops::halftone::halftone::{halftone, rotate_halftone, ssaa_halftone, ssaa_rotate_halftone};
 pub use ops::svec_ops::halftone::screentone::{rotate_screentone, screentone, ssaa_rotate_screentone, ssaa_screentone};
+pub use ops::svec_ops::normalize::NormalizeSVec;
