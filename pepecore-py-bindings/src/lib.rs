@@ -1,11 +1,16 @@
 mod ops;
 mod structure;
 
-use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat, TypeNoise,ResizesFilter,ResizesAlg};
+use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat, ResizesAlg, ResizesFilter, TypeNoise};
 
-use pyo3::prelude::*;
 use crate::ops::encode::JpegSamplingFactorPy;
-
+use pepecore::rayon_mode;
+use pyo3::prelude::*;
+#[pyfunction(name = "ryon_mode")]
+#[pyo3(signature = (on=true))]
+pub fn ryon_mode(on: bool) {
+    rayon_mode(on)
+}
 #[pymodule]
 fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::read_write::read, m)?)?;
@@ -19,6 +24,8 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::old_rebind::best_tile, m)?)?;
     m.add_function(wrap_pyfunction!(ops::old_rebind::noise_generate, m)?)?;
     m.add_function(wrap_pyfunction!(ops::encode::py_jpeg_encode, m)?)?;
+    m.add_function(wrap_pyfunction!(ops::resize::py_resize, m)?)?;
+    m.add_function(wrap_pyfunction!(ryon_mode, m)?)?;
     m.add_class::<ColorMode>()?;
     m.add_class::<ImgFormat>()?;
     m.add_class::<ColorCVT>()?;

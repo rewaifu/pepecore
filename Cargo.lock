@@ -659,13 +659,15 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "pepecore"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "fast_image_resize",
  "filebuffer",
  "image",
  "jpeg-encoder",
+ "once_cell",
  "pepecore-array",
+ "rayon",
  "thiserror 2.0.12",
  "zune-core 0.5.0-rc2",
  "zune-jpegxl",
@@ -681,7 +683,7 @@ dependencies = [
 
 [[package]]
 name = "pepecore-py-bindings"
-version = "1.0.0-beta.2"
+version = "1.0.1"
 dependencies = [
  "fast_image_resize",
  "libc 1.0.0-alpha.1",
