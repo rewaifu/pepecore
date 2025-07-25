@@ -20,15 +20,17 @@
 //! let types = vec![DotType::CROSS, DotType::CIRCLE, DotType::ELLIPSE];
 //! rotate_halftone(&mut rgb, &sizes, &angles, &types).unwrap();
 //! ```
+use crate::array::Shape;
 use crate::enums::DotType;
 use crate::errors::HalftoneError;
+use crate::global_params::rayon_get_mode;
 use crate::ops::svec_ops::halftone::dot::dot_create;
 use crate::ops::svec_ops::halftone::utils::{HalftonePixel, compute_cos_sin, rotate_pixel_coordinates, wrap_index};
-use pepecore_array::{PixelType, SVec};
-use std::fmt::Debug;
-use fast_image_resize::ResizeAlg;
-use crate::array::Shape;
 use crate::ops::svec_ops::resize::fir::ResizeSVec;
+use fast_image_resize::ResizeAlg;
+use pepecore_array::{PixelType, SVec};
+use rayon::prelude::*;
+use std::fmt::Debug;
 
 /// Apply a standard (non-rotated) halftone to the image.
 ///
@@ -107,9 +109,15 @@ where
 
     Ok(())
 }
-fn apply_ssaa_halftone<T>(img: &mut SVec, dot_sizes: &[usize], dot_type: &[DotType],scale:f32,resize_alg: ResizeAlg) -> Result<(), HalftoneError>
+fn apply_ssaa_halftone<T>(
+    img: &mut SVec,
+    dot_sizes: &[usize],
+    dot_type: &[DotType],
+    scale: f32,
+    resize_alg: ResizeAlg,
+) -> Result<(), HalftoneError>
 where
-    T: HalftonePixel + Debug,
+    T: HalftonePixel + Debug + std::marker::Send + std::marker::Sync,
 {
     // Retrieve image shape and data buffer
     let (height, width, channels_opt) = img.shape();
@@ -127,7 +135,7 @@ where
     let mut dot_matrices = Vec::with_capacity(channels);
 
     for index in 0..channels {
-        let size = (dot_sizes[index] as f32*scale) as usize;
+        let size = (dot_sizes[index] as f32 * scale) as usize;
         let bias = size / 2;
         let doubled = size * 2;
         let matrix = if size > 0 {
@@ -147,33 +155,76 @@ where
     let y_in_tab: Vec<usize> = (0..(height as f32 * scale) as usize)
         .map(|y| ((y as f32 / scale).round() as usize).min(height - 1))
         .collect();
-    let mut new_vec:Vec<T> =  Vec::with_capacity((height as f32 *scale) as usize*(width as f32 *scale) as usize*channels);
-    // Apply thresholding per pixel and channel
-    for (ly, y) in y_in_tab.iter().enumerate(){
-        for (lx,x) in x_in_tab.iter().enumerate(){
-            for c in 0..channels {
+    if rayon_get_mode() {
+        let mut new_vec: Vec<T> = (0..(height as f32 * scale) as usize * (width as f32 * scale) as usize * channels)
+            .into_par_iter()
+            .map(|i| {
+                let c = i % channels;
+                let lx = (i / channels) % x_in_tab.len();
+                let ly = i / (channels * x_in_tab.len());
+
+                let x = x_in_tab[lx];
+                let y = y_in_tab[ly];
+
                 let ds = double_sizes[c];
                 let idx = (y * width + x) * channels + c;
-                // println!("{}",ds);
+
                 if ds == 0 {
-                    new_vec.push(data[idx]);
-                    continue;
+                    return data[idx];
                 }
+
                 let bias = biases[c];
                 let offset_y = (ly + bias) % ds;
                 let idx_in_matrix = (lx + bias) % ds + offset_y * ds;
 
-                new_vec.push( if data[idx] < dot_matrices[c][idx_in_matrix] {
+                if data[idx] < dot_matrices[c][idx_in_matrix] {
                     T::MIN_VALUE
                 } else {
                     T::MAX_VALUE
-                });
+                }
+            })
+            .collect();
+        std::mem::swap(data, &mut new_vec);
+        img.shape = Shape::new(
+            (height as f32 * scale) as usize,
+            (width as f32 * scale) as usize,
+            channels_opt,
+        );
+        img.resize(height, width, resize_alg, false);
+    } else {
+        let mut new_vec: Vec<T> =
+            Vec::with_capacity((height as f32 * scale) as usize * (width as f32 * scale) as usize * channels);
+        // Apply thresholding per pixel and channel
+        for (ly, y) in y_in_tab.iter().enumerate() {
+            for (lx, x) in x_in_tab.iter().enumerate() {
+                for c in 0..channels {
+                    let ds = double_sizes[c];
+                    let idx = (y * width + x) * channels + c;
+                    // println!("{}",ds);
+                    if ds == 0 {
+                        new_vec.push(data[idx]);
+                        continue;
+                    }
+                    let bias = biases[c];
+                    let offset_y = (ly + bias) % ds;
+                    let idx_in_matrix = (lx + bias) % ds + offset_y * ds;
+
+                    new_vec.push(if data[idx] < dot_matrices[c][idx_in_matrix] {
+                        T::MIN_VALUE
+                    } else {
+                        T::MAX_VALUE
+                    });
+                }
             }
         }
+        std::mem::swap(data, &mut new_vec);
+        img.shape = Shape::new(
+            (height as f32 * scale) as usize,
+            (width as f32 * scale) as usize,
+            channels_opt,
+        );
+        img.resize(height, width, resize_alg, false);
     }
-    std::mem::swap(data, &mut new_vec);
-    img.shape = Shape::new((height as f32*scale) as usize ,(width as f32*scale) as usize, channels_opt);
-    img.resize(height,width,resize_alg,false);
     Ok(())
 }
 /// Apply a rotated halftone to the image.
@@ -243,7 +294,14 @@ where
                     continue;
                 }
                 // Rotate current pixel coords around image center
-                let (rx, ry) = rotate_pixel_coordinates(x as f32+x_center, y as f32+y_center, width as f32, height as f32, cos_sin[c][0], cos_sin[c][1]);
+                let (rx, ry) = rotate_pixel_coordinates(
+                    x as f32 + x_center,
+                    y as f32 + y_center,
+                    width as f32,
+                    height as f32,
+                    cos_sin[c][0],
+                    cos_sin[c][1],
+                );
                 let dx = wrap_index(rx.round() as i32, ds);
                 let dy = wrap_index(ry.round() as i32, ds);
 
@@ -265,17 +323,17 @@ fn apply_ssaa_rotate_halftone<T>(
     dot_sizes: &[usize],
     angles: &[f32],
     dot_type: &[DotType],
-    scale:f32,
-    resize_alg: ResizeAlg
+    scale: f32,
+    resize_alg: ResizeAlg,
 ) -> Result<(), HalftoneError>
 where
-    T: HalftonePixel + Debug,
+    T: HalftonePixel + Debug + std::marker::Send + std::marker::Sync,
 {
     // Retrieve image shape and data buffer
     let (height, width, channels_opt) = img.shape();
     let data = img.get_mut_vec::<T>()?;
     let channels = channels_opt.ok_or(pepecore_array::error::Error::NoChannelsError)?;
-    let (scale_height,scale_width) = ((height as f32*scale) as usize,(width as f32*scale) as usize);
+    let (scale_height, scale_width) = ((height as f32 * scale) as usize, (width as f32 * scale) as usize);
     // Ensure dot_sizes and angles arrays match number of channels
     if dot_sizes.len() < channels || angles.len() < channels || dot_type.len() < channels {
         return Err(HalftoneError::DotSizeMismatch(dot_sizes.len().max(angles.len()), channels));
@@ -289,7 +347,7 @@ where
 
     // Precompute matrices and rotation sin/cos for each channel
     for i in 0..channels {
-        let size = (dot_sizes[i] as f32 *scale) as usize;
+        let size = (dot_sizes[i] as f32 * scale) as usize;
         let doubled = size * 2;
         let matrix = if size > 0 {
             let kernel = dot_create(size, &dot_type[i]);
@@ -308,33 +366,74 @@ where
     let y_in_tab: Vec<usize> = (0..(height as f32 * scale) as usize)
         .map(|y| ((y as f32 / scale).round() as usize).min(height - 1))
         .collect();
-    let mut new_vec:Vec<T> =  Vec::with_capacity((height as f32 *scale) as usize*(width as f32 *scale) as usize*channels);
-    // Apply rotated halftone per pixel and channel
-    for (ly,y) in y_in_tab.iter().enumerate(){
-        for (lx,x) in x_in_tab.iter().enumerate(){
-            for c in 0..channels {
+
+    if rayon_get_mode() {
+        let mut new_vec: Vec<T> = (0..y_in_tab.len() * x_in_tab.len() * channels)
+            .into_par_iter()
+            .map(|i| {
+                let px = i / channels;
+                let c = i % channels;
+
+                let ly = px / x_in_tab.len();
+                let lx = px % x_in_tab.len();
+
+                let y = y_in_tab[ly];
+                let x = x_in_tab[lx];
+
                 let ds = double_sizes[c];
                 let idx = (y * width + x) * channels + c;
+
                 if ds == 0 {
-                    new_vec.push(data[idx]);
-                    continue;
+                    return data[idx];
                 }
-                // Rotate current pixel coords around image center
+
                 let (rx, ry) = rotate_pixel_coordinates(lx as f32, ly as f32, x_center, y_center, cos_sin[c][0], cos_sin[c][1]);
+
                 let dx = wrap_index(rx.round() as i32, ds);
                 let dy = wrap_index(ry.round() as i32, ds);
-                new_vec.push(if data[idx] < dot_matrices[c][dx + dy * ds] {
+
+                if data[idx] < dot_matrices[c][dx + dy * ds] {
                     T::MIN_VALUE
                 } else {
                     T::MAX_VALUE
-                });
+                }
+            })
+            .collect();
+
+        std::mem::swap(data, &mut new_vec);
+        img.shape = Shape::new(scale_height, scale_width, channels_opt);
+        img.resize(height, width, resize_alg, false);
+    } else {
+        let mut new_vec: Vec<T> =
+            Vec::with_capacity((height as f32 * scale) as usize * (width as f32 * scale) as usize * channels);
+        // Apply rotated halftone per pixel and channel
+        for (ly, y) in y_in_tab.iter().enumerate() {
+            for (lx, x) in x_in_tab.iter().enumerate() {
+                for c in 0..channels {
+                    let ds = double_sizes[c];
+                    let idx = (y * width + x) * channels + c;
+                    if ds == 0 {
+                        new_vec.push(data[idx]);
+                        continue;
+                    }
+                    // Rotate current pixel coords around image center
+                    let (rx, ry) =
+                        rotate_pixel_coordinates(lx as f32, ly as f32, x_center, y_center, cos_sin[c][0], cos_sin[c][1]);
+                    let dx = wrap_index(rx.round() as i32, ds);
+                    let dy = wrap_index(ry.round() as i32, ds);
+                    new_vec.push(if data[idx] < dot_matrices[c][dx + dy * ds] {
+                        T::MIN_VALUE
+                    } else {
+                        T::MAX_VALUE
+                    });
+                }
             }
         }
-    }
 
-    std::mem::swap(data, &mut new_vec);
-    img.shape = Shape::new(scale_height ,scale_width, channels_opt);
-    img.resize(height,width,resize_alg,false);
+        std::mem::swap(data, &mut new_vec);
+        img.shape = Shape::new(scale_height, scale_width, channels_opt);
+        img.resize(height, width, resize_alg, false);
+    }
     Ok(())
 }
 /// Apply non-rotated halftone to `img` dispatching by pixel type.
@@ -348,11 +447,17 @@ pub fn halftone(img: &mut SVec, dot_sizes: &[usize], dot_type: &[DotType]) -> Re
         PixelType::U16 => apply_halftone::<u16>(img, dot_sizes, dot_type),
     }
 }
-pub fn ssaa_halftone(img: &mut SVec, dot_sizes: &[usize], dot_type: &[DotType],scale:f32,resize_alg: ResizeAlg) -> Result<(), HalftoneError> {
+pub fn ssaa_halftone(
+    img: &mut SVec,
+    dot_sizes: &[usize],
+    dot_type: &[DotType],
+    scale: f32,
+    resize_alg: ResizeAlg,
+) -> Result<(), HalftoneError> {
     match img.pixel_type() {
-        PixelType::F32 => apply_ssaa_halftone::<f32>(img, dot_sizes, dot_type,scale,resize_alg),
-        PixelType::U8 => apply_ssaa_halftone::<u8>(img, dot_sizes, dot_type,scale,resize_alg),
-        PixelType::U16 => apply_ssaa_halftone::<u16>(img, dot_sizes, dot_type,scale,resize_alg),
+        PixelType::F32 => apply_ssaa_halftone::<f32>(img, dot_sizes, dot_type, scale, resize_alg),
+        PixelType::U8 => apply_ssaa_halftone::<u8>(img, dot_sizes, dot_type, scale, resize_alg),
+        PixelType::U16 => apply_ssaa_halftone::<u16>(img, dot_sizes, dot_type, scale, resize_alg),
     }
 }
 /// Apply rotated halftone to `img` dispatching by pixel type.
@@ -366,9 +471,17 @@ pub fn rotate_halftone(img: &mut SVec, dot_sizes: &[usize], angles: &[f32], dot_
         PixelType::U16 => apply_rotate_halftone::<u16>(img, dot_sizes, angles, dot_type),
     }
 }
-pub fn ssaa_rotate_halftone(img: &mut SVec, dot_sizes: &[usize], angles: &[f32], dot_type: &[DotType],scale:f32,resize_alg: ResizeAlg) -> Result<(), HalftoneError> {
+pub fn ssaa_rotate_halftone(
+    img: &mut SVec,
+    dot_sizes: &[usize],
+    angles: &[f32],
+    dot_type: &[DotType],
+    scale: f32,
+    resize_alg: ResizeAlg,
+) -> Result<(), HalftoneError> {
     match img.pixel_type() {
-        PixelType::F32 => apply_ssaa_rotate_halftone::<f32>(img, dot_sizes,angles, dot_type,scale,resize_alg),
-        PixelType::U8 => apply_ssaa_rotate_halftone::<u8>(img, dot_sizes,angles, dot_type,scale,resize_alg),
-        PixelType::U16 => apply_ssaa_rotate_halftone::<u16>(img, dot_sizes,angles, dot_type,scale,resize_alg),
-    }}
+        PixelType::F32 => apply_ssaa_rotate_halftone::<f32>(img, dot_sizes, angles, dot_type, scale, resize_alg),
+        PixelType::U8 => apply_ssaa_rotate_halftone::<u8>(img, dot_sizes, angles, dot_type, scale, resize_alg),
+        PixelType::U16 => apply_ssaa_rotate_halftone::<u16>(img, dot_sizes, angles, dot_type, scale, resize_alg),
+    }
+}

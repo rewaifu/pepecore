@@ -43,16 +43,18 @@ pub use pepecore_array as array;
 
 pub mod enums;
 pub mod errors;
+mod global_params;
 pub mod ops;
 
 // Re-export common types and functions
 pub use ops::read::read;
 pub use ops::save::save;
 
+pub use global_params::rayon_mode;
 #[cfg(feature = "encode")]
 pub use ops::encode;
 pub use ops::svec_ops::color_levels;
 pub use ops::svec_ops::crop::crop;
 pub use ops::svec_ops::cvtcolor::cvt_color;
-pub use ops::svec_ops::halftone::halftone::{halftone,rotate_halftone,ssaa_halftone,ssaa_rotate_halftone};
-pub use ops::svec_ops::halftone::screentone::{rotate_screentone,screentone,ssaa_rotate_screentone,ssaa_screentone};
+pub use ops::svec_ops::halftone::halftone::{halftone, rotate_halftone, ssaa_halftone, ssaa_rotate_halftone};
+pub use ops::svec_ops::halftone::screentone::{rotate_screentone, screentone, ssaa_rotate_screentone, ssaa_screentone};
