@@ -19,13 +19,16 @@
 //! rotate_screentone(&mut img_f32, 5, 45.0, &DotType::ELLIPSE);
 //! ```
 
-use fast_image_resize::ResizeAlg;
 use crate::array::Shape;
 use crate::enums::DotType;
+use crate::global_params::rayon_get_mode;
 use crate::ops::svec_ops::halftone::dot::dot_create;
 use crate::ops::svec_ops::halftone::utils::{HalftonePixel, compute_cos_sin, rotate_pixel_coordinates, wrap_index};
-use pepecore_array::{PixelType, SVec};
 use crate::ops::svec_ops::resize::fir::ResizeSVec;
+use fast_image_resize::ResizeAlg;
+use pepecore_array::{PixelType, SVec};
+use rayon::iter::ParallelIterator;
+use rayon::prelude::IntoParallelIterator;
 
 /// Apply screentone (non-rotated) to a single-channel image in-place.
 ///
@@ -85,7 +88,7 @@ fn apply_rotate_screentone<T: HalftonePixel>(img: &mut SVec, dot_size: usize, an
     let dot_matrix_data = dot_matrix.get_data::<f32>().unwrap();
     let new_dot_matrix_data = T::prepare_dot_matrix(dot_matrix_data);
     let lx_bias = dot_size / 2;
-    let ly_bias = dot_size / 2 ;
+    let ly_bias = dot_size / 2;
     let dot_size = dot_size * 2;
 
     for ly in 0..h {
@@ -105,51 +108,87 @@ fn apply_rotate_screentone<T: HalftonePixel>(img: &mut SVec, dot_size: usize, an
         }
     }
 }
-fn apply_ssaa_screentone<T: HalftonePixel>(img: &mut SVec, dot_size: usize, dot_type: &DotType,scale:f32,resize_alg: ResizeAlg) {
+fn apply_ssaa_screentone<T: HalftonePixel + std::marker::Send + std::marker::Sync>(
+    img: &mut SVec,
+    dot_size: usize,
+    dot_type: &DotType,
+    scale: f32,
+    resize_alg: ResizeAlg,
+) {
     let (h, w, _) = img.shape();
     let mut_img = img.get_mut_vec::<T>().unwrap();
-    let dot_size = (dot_size as f32 *scale).round() as usize;
+    let dot_size = (dot_size as f32 * scale).round() as usize;
     let dot_matrix = dot_create(dot_size, dot_type);
     let dot_matrix_data = dot_matrix.get_data::<f32>().unwrap();
     let lx_bias = dot_size / 2;
     let ly_bias = dot_size / 2;
     let dot_size = dot_size * 2;
     let dot_matrix_converted = T::prepare_dot_matrix(dot_matrix_data);
-
     let x_in_tab: Vec<usize> = (0..(w as f32 * scale) as usize)
         .map(|x| ((x as f32 / scale).round() as usize).min(w - 1))
         .collect();
     let y_in_tab: Vec<usize> = (0..(h as f32 * scale) as usize)
         .map(|y| ((y as f32 / scale).round() as usize).min(h - 1))
         .collect();
+    if rayon_get_mode() {
+        let mut new_vec: Vec<T> = (0..(h as f32 * scale) as usize * (w as f32 * scale) as usize)
+            .into_par_iter()
+            .map(|i| {
+                let lx = i % x_in_tab.len();
+                let ly = i / x_in_tab.len();
 
-    let mut new_vec:Vec<T> = Vec::with_capacity((h as f32 *scale) as usize*(w as f32 *scale) as usize);
-    for (ly, y) in y_in_tab.iter().enumerate(){
-        let ly2 = (ly + ly_bias) % dot_size;
+                let x = x_in_tab[lx];
+                let y = y_in_tab[ly];
+                let idx = y * w + x;
 
-        for (lx,x) in x_in_tab.iter().enumerate(){
-            let idx = y * w + x;
-            let dot_idx = (lx + lx_bias) % dot_size + ly2 * dot_size;
+                let ly2 = (ly + ly_bias) % dot_size;
+                let dot_idx = (lx + lx_bias) % dot_size + ly2 * dot_size;
 
-            new_vec.push( if mut_img[idx] < dot_matrix_converted[dot_idx] {
-                T::MIN_VALUE
-            } else {
-                T::MAX_VALUE
-            });
+                if mut_img[idx] < dot_matrix_converted[dot_idx] {
+                    T::MIN_VALUE
+                } else {
+                    T::MAX_VALUE
+                }
+            })
+            .collect();
+        std::mem::swap(mut_img, &mut new_vec);
+        img.shape = Shape::new((h as f32 * scale) as usize, (w as f32 * scale) as usize, None);
+        img.resize(h, w, resize_alg, false);
+    } else {
+        let mut new_vec: Vec<T> = Vec::with_capacity((h as f32 * scale) as usize * (w as f32 * scale) as usize);
+        for (ly, y) in y_in_tab.iter().enumerate() {
+            let ly2 = (ly + ly_bias) % dot_size;
+
+            for (lx, x) in x_in_tab.iter().enumerate() {
+                let idx = y * w + x;
+                let dot_idx = (lx + lx_bias) % dot_size + ly2 * dot_size;
+
+                new_vec.push(if mut_img[idx] < dot_matrix_converted[dot_idx] {
+                    T::MIN_VALUE
+                } else {
+                    T::MAX_VALUE
+                });
+            }
         }
+        std::mem::swap(mut_img, &mut new_vec);
+        img.shape = Shape::new((h as f32 * scale) as usize, (w as f32 * scale) as usize, None);
+        img.resize(h, w, resize_alg, false);
     }
-    std::mem::swap(mut_img, &mut new_vec);
-    img.shape = Shape::new((h as f32*scale) as usize,(w as f32*scale) as usize,None);
-    img.resize(h,w,resize_alg,false);
-    
 }
-fn apply_rotate_ssaa_screentone<T: HalftonePixel>(img: &mut SVec, dot_size: usize,angle:f32, dot_type: &DotType,scale:f32,resize_alg: ResizeAlg) {
+fn apply_rotate_ssaa_screentone<T: HalftonePixel + std::marker::Send + std::marker::Sync>(
+    img: &mut SVec,
+    dot_size: usize,
+    angle: f32,
+    dot_type: &DotType,
+    scale: f32,
+    resize_alg: ResizeAlg,
+) {
     let (h, w, _) = img.shape();
     let mut_img = img.get_mut_vec::<T>().unwrap();
-    let dot_size = (dot_size as f32 *scale).round() as usize;
+    let dot_size = (dot_size as f32 * scale).round() as usize;
     let dot_matrix = dot_create(dot_size, dot_type);
     let dot_matrix_data = dot_matrix.get_data::<f32>().unwrap();
-    let (s_h,s_w)=((h as f32*scale) as usize,(w as f32* scale) as usize);
+    let (s_h, s_w) = ((h as f32 * scale) as usize, (w as f32 * scale) as usize);
     let lx_bias = dot_size / 2;
     let ly_bias = dot_size / 2;
     let dot_size = dot_size * 2;
@@ -162,30 +201,59 @@ fn apply_rotate_ssaa_screentone<T: HalftonePixel>(img: &mut SVec, dot_size: usiz
     let y_in_tab: Vec<usize> = (0..(h as f32 * scale) as usize)
         .map(|y| ((y as f32 / scale).round() as usize).min(h - 1))
         .collect();
+    if rayon_get_mode() {
+        let mut new_vec: Vec<T> = (0..(h as f32 * scale) as usize * (w as f32 * scale) as usize)
+            .into_par_iter()
+            .map(|i| {
+                let lx = i % x_in_tab.len();
+                let ly = i / x_in_tab.len();
 
-    let mut new_vec:Vec<T> = Vec::with_capacity((h as f32 *scale) as usize*(w as f32 *scale) as usize);
-    for (ly, y) in y_in_tab.iter().enumerate(){
-        let ly2 = ly + ly_bias;
+                let x = x_in_tab[lx];
+                let y = y_in_tab[ly];
+                let idx = y * w + x;
 
-        for (lx,x) in x_in_tab.iter().enumerate(){
-            let lx2 = lx + lx_bias;
-            let idx = y * w + x;
-            let rot = rotate_pixel_coordinates(lx2 as f32, ly2 as f32, s_w as f32, s_h as f32, cos_sin[0], cos_sin[1]);
-            let dx = wrap_index(rot.0.round() as i32, dot_size);
-            let dy = wrap_index(rot.1.round() as i32, dot_size);
-            new_vec.push(
-                          if mut_img[idx] < dot_matrix_converted[dx + dy * dot_size] {
-                T::MIN_VALUE
-            } else {
-                T::MAX_VALUE
+                let lx2 = lx + lx_bias;
+                let ly2 = ly + ly_bias;
+
+                let (rx, ry) = rotate_pixel_coordinates(lx2 as f32, ly2 as f32, s_w as f32, s_h as f32, cos_sin[0], cos_sin[1]);
+
+                let dx = wrap_index(rx.round() as i32, dot_size);
+                let dy = wrap_index(ry.round() as i32, dot_size);
+                let mat_idx = dx + dy * dot_size;
+
+                if mut_img[idx] < dot_matrix_converted[mat_idx] {
+                    T::MIN_VALUE
+                } else {
+                    T::MAX_VALUE
+                }
+            })
+            .collect();
+
+        std::mem::swap(mut_img, &mut new_vec);
+        img.shape = Shape::new(s_h, s_w, None);
+        img.resize(h, w, resize_alg, false);
+    } else {
+        let mut new_vec: Vec<T> = Vec::with_capacity((h as f32 * scale) as usize * (w as f32 * scale) as usize);
+        for (ly, y) in y_in_tab.iter().enumerate() {
+            let ly2 = ly + ly_bias;
+
+            for (lx, x) in x_in_tab.iter().enumerate() {
+                let lx2 = lx + lx_bias;
+                let idx = y * w + x;
+                let rot = rotate_pixel_coordinates(lx2 as f32, ly2 as f32, s_w as f32, s_h as f32, cos_sin[0], cos_sin[1]);
+                let dx = wrap_index(rot.0.round() as i32, dot_size);
+                let dy = wrap_index(rot.1.round() as i32, dot_size);
+                new_vec.push(if mut_img[idx] < dot_matrix_converted[dx + dy * dot_size] {
+                    T::MIN_VALUE
+                } else {
+                    T::MAX_VALUE
+                });
             }
-        );
         }
+        std::mem::swap(mut_img, &mut new_vec);
+        img.shape = Shape::new(s_h, s_w, None);
+        img.resize(h, w, resize_alg, false);
     }
-    std::mem::swap(mut_img, &mut new_vec);
-    img.shape = Shape::new(s_h,s_w, None);
-    img.resize(h,w,resize_alg,false);
-
 }
 /// Public API: apply non-rotated screentone, dispatching by pixel type.
 pub fn screentone(img: &mut SVec, dot_size: usize, dot_type: &DotType) {
@@ -212,10 +280,17 @@ pub fn rotate_screentone(img: &mut SVec, dot_size: usize, angle: f32, dot_type: 
     }
 }
 /// Public API: apply SSAA non-rotated screentone, dispatching by pixel type.
-pub fn ssaa_rotate_screentone(img: &mut SVec, dot_size: usize, angle: f32, dot_type: &DotType, scale: f32, resize_alg: ResizeAlg) {
+pub fn ssaa_rotate_screentone(
+    img: &mut SVec,
+    dot_size: usize,
+    angle: f32,
+    dot_type: &DotType,
+    scale: f32,
+    resize_alg: ResizeAlg,
+) {
     match img.pixel_type() {
-        PixelType::F32 => apply_rotate_ssaa_screentone::<f32>(img, dot_size, angle, dot_type, scale,resize_alg),
-        PixelType::U8 => apply_rotate_ssaa_screentone::<u8>(img, dot_size, angle, dot_type, scale,resize_alg),
-        PixelType::U16 => apply_rotate_ssaa_screentone::<u16>(img, dot_size, angle, dot_type, scale,resize_alg),
+        PixelType::F32 => apply_rotate_ssaa_screentone::<f32>(img, dot_size, angle, dot_type, scale, resize_alg),
+        PixelType::U8 => apply_rotate_ssaa_screentone::<u8>(img, dot_size, angle, dot_type, scale, resize_alg),
+        PixelType::U16 => apply_rotate_ssaa_screentone::<u16>(img, dot_size, angle, dot_type, scale, resize_alg),
     }
 }

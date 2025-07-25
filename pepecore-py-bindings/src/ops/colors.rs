@@ -1,6 +1,5 @@
 use crate::structure::enums::{ColorCVT, DotTypePy, ResizesAlg, ResizesFilter};
 use crate::structure::svec_traits::{PySvec, SvecPyArray};
-use fast_image_resize::{FilterType, ResizeAlg};
 use pepecore::cvt_color::cvt_color;
 use pepecore::enums::CVTColor;
 use pepecore::{
@@ -103,12 +102,10 @@ pub fn py_screentone<'py>(
         } else {
             py.allow_threads(|| rotate_screentone(&mut img, dot_size, angle, &dot_type.into()));
         }
+    } else if let Some(scale) = scale {
+        py.allow_threads(|| ssaa_screentone(&mut img, dot_size, &dot_type.into(), scale, resize_alg.into()));
     } else {
-        if let Some(scale) = scale {
-            py.allow_threads(|| ssaa_screentone(&mut img, dot_size, &dot_type.into(), scale, resize_alg.into()));
-        } else {
-            py.allow_threads(|| screentone(&mut img, dot_size, &dot_type.into()));
-        }
+        py.allow_threads(|| screentone(&mut img, dot_size, &dot_type.into()));
     }
 
     Ok(match img.pixel_type() {
@@ -141,12 +138,10 @@ pub fn py_halftone<'py>(
         } else {
             py.allow_threads(|| rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types).unwrap());
         }
+    } else if let Some(scale) = scale {
+        py.allow_threads(|| ssaa_halftone(&mut img, &dot_sizes, &dot_types, scale, resize_alg.into()).unwrap());
     } else {
-        if let Some(scale) = scale {
-            py.allow_threads(|| ssaa_halftone(&mut img, &dot_sizes, &dot_types, scale, resize_alg.into()).unwrap());
-        } else {
-            py.allow_threads(|| halftone(&mut img, &dot_sizes, &dot_types).unwrap());
-        }
+        py.allow_threads(|| halftone(&mut img, &dot_sizes, &dot_types).unwrap());
     }
 
     Ok(match img.pixel_type() {
