@@ -149,11 +149,12 @@ where
         double_sizes.push(doubled);
         dot_matrices.push(matrix);
     }
-    let x_in_tab: Vec<usize> = (0..(width as f32 * scale) as usize)
-        .map(|x| ((x as f32 / scale).round() as usize).min(width - 1))
+    let x_in_tab: Vec<usize> = (0..(w as f32 * scale) as usize)
+        .map(|x| ((x as f32 / scale).floor() as usize).min(w - 1))
         .collect();
-    let y_in_tab: Vec<usize> = (0..(height as f32 * scale) as usize)
-        .map(|y| ((y as f32 / scale).round() as usize).min(height - 1))
+
+    let y_in_tab: Vec<usize> = (0..(h as f32 * scale) as usize)
+        .map(|y| ((y as f32 / scale).floor() as usize).min(h - 1))
         .collect();
     if rayon_get_mode() {
         let mut new_vec: Vec<T> = (0..(height as f32 * scale) as usize * (width as f32 * scale) as usize * channels)
@@ -360,11 +361,12 @@ where
         dot_matrices.push(matrix);
         cos_sin.push(compute_cos_sin(angles[i].to_radians()));
     }
-    let x_in_tab: Vec<usize> = (0..(width as f32 * scale) as usize)
-        .map(|x| ((x as f32 / scale).round() as usize).min(width - 1))
+    let x_in_tab: Vec<usize> = (0..(w as f32 * scale) as usize)
+        .map(|x| ((x as f32 / scale).floor() as usize).min(w - 1))
         .collect();
-    let y_in_tab: Vec<usize> = (0..(height as f32 * scale) as usize)
-        .map(|y| ((y as f32 / scale).round() as usize).min(height - 1))
+
+    let y_in_tab: Vec<usize> = (0..(h as f32 * scale) as usize)
+        .map(|y| ((y as f32 / scale).floor() as usize).min(h - 1))
         .collect();
 
     if rayon_get_mode() {

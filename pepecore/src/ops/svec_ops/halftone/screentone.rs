@@ -125,10 +125,11 @@ fn apply_ssaa_screentone<T: HalftonePixel + std::marker::Send + std::marker::Syn
     let dot_size = dot_size * 2;
     let dot_matrix_converted = T::prepare_dot_matrix(dot_matrix_data);
     let x_in_tab: Vec<usize> = (0..(w as f32 * scale) as usize)
-        .map(|x| ((x as f32 / scale).round() as usize).min(w - 1))
+        .map(|x| ((x as f32 / scale).floor() as usize).min(w - 1))
         .collect();
+
     let y_in_tab: Vec<usize> = (0..(h as f32 * scale) as usize)
-        .map(|y| ((y as f32 / scale).round() as usize).min(h - 1))
+        .map(|y| ((y as f32 / scale).floor() as usize).min(h - 1))
         .collect();
     if rayon_get_mode() {
         let mut new_vec: Vec<T> = (0..(h as f32 * scale) as usize * (w as f32 * scale) as usize)
@@ -196,10 +197,11 @@ fn apply_rotate_ssaa_screentone<T: HalftonePixel + std::marker::Send + std::mark
     let cos_sin = compute_cos_sin(angle.to_radians());
 
     let x_in_tab: Vec<usize> = (0..(w as f32 * scale) as usize)
-        .map(|x| ((x as f32 / scale).round() as usize).min(w - 1))
+        .map(|x| ((x as f32 / scale).floor() as usize).min(w - 1))
         .collect();
+
     let y_in_tab: Vec<usize> = (0..(h as f32 * scale) as usize)
-        .map(|y| ((y as f32 / scale).round() as usize).min(h - 1))
+        .map(|y| ((y as f32 / scale).floor() as usize).min(h - 1))
         .collect();
     if rayon_get_mode() {
         let mut new_vec: Vec<T> = (0..(h as f32 * scale) as usize * (w as f32 * scale) as usize)
