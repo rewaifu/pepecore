@@ -8,31 +8,42 @@ use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
 
 #[pyfunction]
 #[pyo3(signature = (path, color_mode = ColorMode::DYNAMIC, img_format =  ImgFormat::DYNAMIC))]
-pub fn read(py: Python<'_>, path: String, color_mode: ColorMode, img_format: ImgFormat) -> PyResult<Bound<'_, PyAny>> {
-    let img = py.allow_threads(|| match img_format {
-        ImgFormat::F32 => {
-            let mut buff = read_in_path(&*path, ImgColor::from(color_mode)).unwrap();
-            buff.as_f32();
-            buff
-        }
-        ImgFormat::U8 => {
-            let mut buff = read_in_path(&*path, ImgColor::from(color_mode)).unwrap();
-            buff.as_u8();
-            buff
-        }
-        ImgFormat::U16 => {
-            let mut buff = read_in_path(&*path, ImgColor::from(color_mode)).unwrap();
-            buff.as_u16();
-            buff
-        }
-        ImgFormat::DYNAMIC => read_in_path(&*path, ImgColor::from(color_mode)).unwrap(),
-    });
+pub fn read(
+    py: Python<'_>,
+    path: String,
+    color_mode: ColorMode,
+    img_format: ImgFormat,
+) -> PyResult<Bound<'_, PyAny>> {
+    // ловим панику на верхнем уровне
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        py.allow_threads(|| match img_format {
+            ImgFormat::F32 => {
+                let mut buff = read_in_path(&*path, ImgColor::from(color_mode)).unwrap();
+                buff.as_f32();
+                buff
+            }
+            ImgFormat::U8 => {
+                let mut buff = read_in_path(&*path, ImgColor::from(color_mode)).unwrap();
+                buff.as_u8();
+                buff
+            }
+            ImgFormat::U16 => {
+                let mut buff = read_in_path(&*path, ImgColor::from(color_mode)).unwrap();
+                buff.as_u16();
+                buff
+            }
+            ImgFormat::DYNAMIC => read_in_path(&*path, ImgColor::from(color_mode)).unwrap(),
+        })
+    }));
 
-    Ok(match img.pixel_type() {
-        PixelType::U8 => img.to_pyany::<u8>(py)?,
-        PixelType::F32 => img.to_pyany::<f32>(py)?,
-        PixelType::U16 => img.to_pyany::<u16>(py)?,
-    })
+    match result {
+        Ok(img) => Ok(match img.pixel_type() {
+            PixelType::U8 => img.to_pyany::<u8>(py)?,
+            PixelType::F32 => img.to_pyany::<f32>(py)?,
+            PixelType::U16 => img.to_pyany::<u16>(py)?,
+        }),
+        Err(_) => Err(PyRuntimeError::new_err("Rust panic caught in read()")),
+    }
 }
 #[pyfunction]
 #[pyo3(signature = (buffer, color_mode = ColorMode::DYNAMIC, img_format =  ImgFormat::DYNAMIC))]
