@@ -5,6 +5,8 @@ use pepecore::read::{read_in_buffer, read_in_path};
 use pepecore::save::svec_save;
 use pepecore_array::PixelType;
 use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
+use std::panic::{catch_unwind, AssertUnwindSafe}; // для ловли паник
+use pyo3::exceptions::PyRuntimeError;     
 
 #[pyfunction]
 #[pyo3(signature = (path, color_mode = ColorMode::DYNAMIC, img_format =  ImgFormat::DYNAMIC))]
