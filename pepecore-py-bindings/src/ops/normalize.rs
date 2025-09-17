@@ -1,10 +1,9 @@
 use crate::structure::svec_traits::{PySvec, SvecPyArray};
-use pepecore::ops::svec_ops::resize::fir::ResizeSVec;
-use pepecore::{NormalizeSVec, rayon_mode};
+use pepecore::NormalizeSVec;
 use pepecore_array::PixelType;
 use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
 
-#[pyfunction(name = "rayon_mode")]
+#[pyfunction(name = "normalise")]
 #[pyo3(signature = (img, scale = 1.0))]
 pub fn normalize<'py>(py: Python<'py>, img: Bound<'py, PyAny>, scale: f32) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;

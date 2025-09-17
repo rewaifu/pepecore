@@ -3,4 +3,5 @@ pub mod crop;
 pub mod cvtcolor;
 pub mod halftone;
 pub mod normalize;
+pub mod real_size;
 pub mod resize;

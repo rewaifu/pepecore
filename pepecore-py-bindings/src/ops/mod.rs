@@ -5,3 +5,4 @@ pub mod normalize;
 pub mod old_rebind;
 pub mod read_write;
 pub mod resize;
+pub mod original_size;

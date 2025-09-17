@@ -6,6 +6,7 @@ publish.workspace = true
 
 [dependencies]
 thiserror = "2.0.12"
-
+rustfft = "6"
+realfft = "3"
 [features]
 type-convert = []

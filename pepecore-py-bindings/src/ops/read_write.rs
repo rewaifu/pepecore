@@ -4,18 +4,13 @@ use pepecore::enums::ImgColor;
 use pepecore::read::{read_in_buffer, read_in_path};
 use pepecore::save::svec_save;
 use pepecore_array::PixelType;
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
-use std::panic::{catch_unwind, AssertUnwindSafe}; // для ловли паник
-use pyo3::exceptions::PyRuntimeError;     
+use std::panic::{AssertUnwindSafe, catch_unwind}; // для ловли паник
 
 #[pyfunction]
 #[pyo3(signature = (path, color_mode = ColorMode::DYNAMIC, img_format =  ImgFormat::DYNAMIC))]
-pub fn read(
-    py: Python<'_>,
-    path: String,
-    color_mode: ColorMode,
-    img_format: ImgFormat,
-) -> PyResult<Bound<'_, PyAny>> {
+pub fn read(py: Python<'_>, path: String, color_mode: ColorMode, img_format: ImgFormat) -> PyResult<Bound<'_, PyAny>> {
     // ловим панику на верхнем уровне
     let result = catch_unwind(AssertUnwindSafe(|| {
         py.allow_threads(|| match img_format {
