@@ -8,9 +8,64 @@ use crate::error::Error;
 use crate::type_convert::f32_to::{convert_f32_to_u8_normalized, convert_f32_to_u16_normalized};
 use crate::type_convert::u8_to::{convert_u8_to_f32_normalized, convert_u8_to_u16_normalized};
 use crate::type_convert::u16_to::{convert_u16_to_f32_normalized, convert_u16_to_u8_normalized};
+use realfft::{RealFftPlanner, RealToComplex};
+use rustfft::num_complex::Complex;
 use std::any::TypeId;
+use std::f32::consts::{FRAC_1_SQRT_2, PI};
 use std::fmt;
 use std::ops::Range;
+
+#[inline]
+fn precompute_twiddle_alpha(n: usize) -> (Vec<Complex<f32>>, Vec<f32>) {
+    let base = 0.5 * (2.0f32 / n as f32).sqrt();
+    let mut tw = Vec::with_capacity(n);
+    let mut alpha = Vec::with_capacity(n);
+    for k in 0..n {
+        let theta = PI * (k as f32) / (2.0 * n as f32);
+        let (s, c) = theta.sin_cos();
+        tw.push(Complex { re: c, im: -s }); // exp(-jθ)
+        alpha.push(if k == 0 { base * FRAC_1_SQRT_2 } else { base }); // 0.5*sqrt(2/N)*(k==0?1/√2:1)
+    }
+    (tw, alpha)
+}
+
+#[inline(always)]
+fn dct1d_ortho_realfft_into(
+    input: &[f32],
+    output: &mut [f32],
+    r2c: &std::sync::Arc<dyn RealToComplex<f32>>,
+    vbuf: &mut [f32],
+    spec: &mut [Complex<f32>],
+    tw: &[Complex<f32>],
+    alpha: &[f32],
+) {
+    let n = input.len();
+    debug_assert_eq!(output.len(), n);
+    debug_assert_eq!(vbuf.len(), 2 * n);
+    debug_assert_eq!(spec.len(), n + 1);
+
+    // even-reflect до 2N
+    for i in 0..n {
+        let v = unsafe { *input.get_unchecked(i) };
+        unsafe {
+            *vbuf.get_unchecked_mut(i) = v;
+            *vbuf.get_unchecked_mut(2 * n - 1 - i) = v;
+        }
+    }
+
+    // Real FFT (2N) → spec
+    r2c.process(vbuf, spec).unwrap();
+
+    // DCT-II: X[k] = Re{ V[k]*exp(-jπk/2N) } * 0.5 * sqrt(2/N), k=0: *1/√2
+    for k in 0..n {
+        unsafe {
+            let z = *spec.get_unchecked(k);
+            let t = *tw.get_unchecked(k);
+            let re = z.re * t.re - z.im * t.im;
+            *output.get_unchecked_mut(k) = re * *alpha.get_unchecked(k);
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Shape {
@@ -211,6 +266,99 @@ impl SVec {
             ImgData::F32(_) => convert_f32_to_u16_normalized(self),
         }
     }
+    pub fn dct2(&mut self) -> Result<(), Error> {
+        let (h, w, c_opt) = self.shape();
+        let c = c_opt.unwrap_or(1);
+
+        self.as_f32();
+        let buf = self.get_data_mut::<f32>()?;
+
+        // планы real-FFT
+        let mut planner = RealFftPlanner::<f32>::new();
+        let r2c_row = planner.plan_fft_forward(2 * w);
+        let r2c_col = planner.plan_fft_forward(2 * h);
+
+        // рабочие буферы (reuse)
+        let mut v_row = r2c_row.make_input_vec(); // 2W
+        let mut v_col = r2c_col.make_input_vec(); // 2H
+        let mut spec_row = r2c_row.make_output_vec(); // W+1
+        let mut spec_col = r2c_col.make_output_vec(); // H+1
+
+        let (tw_row, alpha_row) = precompute_twiddle_alpha(w);
+        let (tw_col, alpha_col) = precompute_twiddle_alpha(h);
+
+        // РАЗДЕЛЬНЫЕ буферы ввода/вывода!
+        let mut row_in = vec![0.0f32; w];
+        let mut row_out = vec![0.0f32; w];
+        let mut col_in = vec![0.0f32; h];
+        let mut col_out = vec![0.0f32; h];
+
+        // --- DCT по строкам ---
+        for ch in 0..c {
+            for y in 0..h {
+                // gather строки
+                let base = y * w * c + ch;
+                let mut idx = base;
+                for x in 0..w {
+                    unsafe {
+                        *row_in.get_unchecked_mut(x) = *buf.get_unchecked(idx);
+                    }
+                    idx += c;
+                }
+
+                dct1d_ortho_realfft_into(
+                    &row_in,
+                    &mut row_out,
+                    &r2c_row,
+                    &mut v_row,
+                    &mut spec_row,
+                    &tw_row,
+                    &alpha_row,
+                );
+
+                // scatter обратно
+                let mut idx = base;
+                for x in 0..w {
+                    unsafe {
+                        *buf.get_unchecked_mut(idx) = *row_out.get_unchecked(x);
+                    }
+                    idx += c;
+                }
+            }
+        }
+
+        for ch in 0..c {
+            for x in 0..w {
+                let mut idx = x * c + ch;
+                for y in 0..h {
+                    unsafe {
+                        *col_in.get_unchecked_mut(y) = *buf.get_unchecked(idx);
+                    }
+                    idx += w * c;
+                }
+
+                dct1d_ortho_realfft_into(
+                    &col_in,
+                    &mut col_out,
+                    &r2c_col,
+                    &mut v_col,
+                    &mut spec_col,
+                    &tw_col,
+                    &alpha_col,
+                );
+
+                let mut idx = x * c + ch;
+                for y in 0..h {
+                    unsafe {
+                        *buf.get_unchecked_mut(idx) = (*col_out.get_unchecked(y)).abs();
+                    }
+                    idx += w * c;
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub fn truncate(&mut self, new_len: usize) -> Result<(), Error> {
         match &mut self.data {
             ImgData::U8(data) => {

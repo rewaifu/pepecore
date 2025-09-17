@@ -49,7 +49,7 @@ pub mod ops;
 // Re-export common types and functions
 pub use ops::read::read;
 pub use ops::save::save;
-
+pub use ops::svec_ops::real_size;
 pub use global_params::rayon_mode;
 #[cfg(feature = "encode")]
 pub use ops::encode;
