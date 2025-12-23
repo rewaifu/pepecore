@@ -49,14 +49,19 @@ class CVTColor(IntEnum):
     RGB2Bayer_RGGB = 15
     RGB2Bayer_GBRG = 16
     RGB2Bayer_GRBG = 17
+    Bayer2RGB_RGGB = 18
+    Bayer2RGB_BGGR = 19
+    Bayer2RGB_GRBG = 20
+    Bayer2RGB_GBRG = 21
     def __reduce__(self): ...
 
 class TypeNoise(Enum):
-    PERLIN = (0,)
-    SIMPLEX = (1,)
-    OPENSIMPLEX = (2,)
-    SUPERSIMPLEX = (3,)
-    PERLINSURFLET = 4
+    PERLIN = 0
+    OPENSIMPLEX2 = 1
+    SUPERSIMPLEX2S = 3
+    CELLULAR = 4
+    VALUECUBIC = 5
+    VALUE = 6
 
     def __reduce__(self): ...
 
@@ -112,8 +117,14 @@ def halftone(
     resize_alg: ResizesAlg = ...,
 ) -> np.ndarray: ...
 def best_tile(img: np.ndarray, tile_size: int) -> tuple[int, int] : ...
-def noise_generate(
-    size: tuple[int, int] | tuple[int, int, int], type_noise: TypeNoise, octaves: int, frequency: float, lacunarity: float, seed: int | None = ...
+
+
+def noise(
+    shape: tuple[int, int] | tuple[int, int, int],
+    octaves: int,
+    amplitudes: Sequence[float],
+    frequency: Sequence[float],
+    noise_type: Sequence[TypeNoise]
 ) -> np.ndarray: ...
 
 class JpegSamplingFactor(IntEnum):
@@ -133,6 +144,15 @@ def normalize(img: np.ndarray, scale: float) -> np.ndarray: ...
 def real_hw(img:np.ndarray)->tuple[int, int] :...
 def real_h(img:np.ndarray)->int:...
 def real_w(img:np.ndarray)->int:...
+
+class Point:
+    def __init__(self,x:int,y:int,size:int):...
+class Bresenham:
+    def __init__(self,p0:Point,p1:Point):...
+class Bezier:
+    def __init__(self,p0:Point,p1:Point,p2:Point,p3:Point,step:float):...
+
+def line(lines:Sequence[Bresenham|Bezier],h:int,w:int)
 __all__ = [
     'CVTColor',
     'DotType',
@@ -148,7 +168,7 @@ __all__ = [
     'cvt_color',
     'halftone',
     'jpeg_encode',
-    'noise_generate',
+    'noise',
     'read',
     'resize',
     'save',
@@ -157,5 +177,9 @@ __all__ = [
     'normalize',
     'real_hw',
     'real_h',
-    'real_w'
+    'real_w',
+    'Bresenham',
+    'Bezier',
+    'Point',
+    'line'
 ]

@@ -73,6 +73,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "biski64"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edac6861ccc0a838d8851bd557be3a3821185b49816f50c11ade7cf8c83afe7e"
+dependencies = [
+ "rand_core 0.9.3",
+]
+
+[[package]]
 name = "bit_field"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -239,6 +248,15 @@ dependencies = [
  "document-features",
  "num-traits",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "fastnoise-lite"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e5f3c3cc9081e5d0e18bcd50e80cd33cba47fc22f88a9da9c33ecd1c87ea5c0"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]
@@ -544,17 +562,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
-name = "noise"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6da45c8333f2e152fc665d78a380be060eb84fad8ca4c9f7ac8ca29216cff0cc"
-dependencies = [
- "num-traits",
- "rand 0.8.5",
- "rand_xorshift",
-]
-
-[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -659,14 +666,17 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "pepecore"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
+ "biski64",
  "fast_image_resize",
+ "fastnoise-lite",
  "filebuffer",
  "image",
  "jpeg-encoder",
  "once_cell",
  "pepecore-array",
+ "rand 0.9.2",
  "rayon",
  "thiserror 2.0.12",
  "zune-core 0.5.0-rc2",
@@ -688,13 +698,13 @@ name = "pepecore-py-bindings"
 version = "1.0.5"
 dependencies = [
  "fast_image_resize",
+ "fastnoise-lite",
  "libc 1.0.0-alpha.1",
- "noise",
  "numpy",
  "pepecore",
  "pepecore-array",
  "pyo3",
- "rand 0.9.1",
+ "rand 0.9.2",
  "rayon",
 ]
 
@@ -883,9 +893,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fbfd9d094a40bf3ae768db9361049ace4c0e04a4fd6b359518bd7b73a73dd97"
+checksum = "6db2770f06117d490610c7488547d543617b21bfa07796d7a12f6f1bd53850d1"
 dependencies = [
  "rand_chacha 0.9.0",
  "rand_core 0.9.3",
@@ -927,15 +937,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38"
 dependencies = [
  "getrandom 0.3.2",
-]
-
-[[package]]
-name = "rand_xorshift"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d25bf25ec5ae4a3f1b92f929810509a2f53d7dca2f50b794ff57e3face536c8f"
-dependencies = [
- "rand_core 0.6.4",
 ]
 
 [[package]]

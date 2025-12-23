@@ -6,6 +6,8 @@ use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat, Resizes
 use crate::ops::encode::JpegSamplingFactorPy;
 use pepecore::rayon_mode;
 use pyo3::prelude::*;
+use crate::ops::lines::{PyPoint, PyBezier,PyBresenham};
+
 #[pyfunction(name = "rayon_mode")]
 #[pyo3(signature = (on=true))]
 pub fn rm(on: bool) {
@@ -22,7 +24,7 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::colors::py_screentone, m)?)?;
     m.add_function(wrap_pyfunction!(ops::colors::py_halftone, m)?)?;
     m.add_function(wrap_pyfunction!(ops::old_rebind::best_tile, m)?)?;
-    m.add_function(wrap_pyfunction!(ops::old_rebind::noise_generate, m)?)?;
+    m.add_function(wrap_pyfunction!(ops::noise::py_noise, m)?)?;
     m.add_function(wrap_pyfunction!(ops::encode::py_jpeg_encode, m)?)?;
     m.add_function(wrap_pyfunction!(ops::resize::py_resize, m)?)?;
     m.add_function(wrap_pyfunction!(rm, m)?)?;
@@ -30,6 +32,10 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::original_size::real_hw, m)?)?;
     m.add_function(wrap_pyfunction!(ops::original_size::real_h, m)?)?;
     m.add_function(wrap_pyfunction!(ops::original_size::real_w, m)?)?;
+    m.add_function(wrap_pyfunction!(ops::lines::py_line,m)?)?;
+    m.add_class::<PyPoint>()?;
+    m.add_class::<PyBresenham>()?;
+    m.add_class::<PyBezier>()?;
     m.add_class::<ColorMode>()?;
     m.add_class::<ImgFormat>()?;
     m.add_class::<ColorCVT>()?;
