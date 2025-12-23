@@ -1,8 +1,6 @@
-use crate::structure::enums::TypeNoise;
-use noise::{NoiseFn, OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex};
-use numpy::ndarray::{Array2, Array3, s};
-use numpy::{PyArrayDyn, PyReadonlyArray2, ToPyArray};
-use pyo3::{Py, PyResult, Python, pyfunction};
+use numpy::ndarray::{ s};
+use numpy::{ PyReadonlyArray2, ToPyArray};
+use pyo3::{ PyResult,  pyfunction};
 use rand::Rng;
 
 #[pyfunction]
@@ -70,96 +68,3 @@ pub fn best_tile(input: PyReadonlyArray2<f32>, tile_size: usize) -> PyResult<(us
     Ok((best_tile[1] as usize, best_tile[2] as usize))
 }
 
-pub fn noise_2d<T>(noise_fn: &T, x: usize, y: usize, octaves: u8, frequency: f64, lacunarity: f64) -> f32
-where
-    T: NoiseFn<f64, 2>,
-{
-    let mut total = 0.0;
-    let mut frequency = frequency;
-    let mut amplitude = 1.0;
-    let mut max_amplitude = 0.0;
-
-    for _ in 0..octaves {
-        let val = noise_fn.get([x as f64 * frequency, y as f64 * frequency]);
-
-        total += val * amplitude;
-        max_amplitude += amplitude;
-        frequency *= lacunarity;
-        amplitude /= 2.0;
-    }
-
-    total as f32 / max_amplitude as f32
-}
-
-pub fn noise_3d<T>(perlin: &T, x: usize, y: usize, z: usize, octaves: u8, frequency: f64, lacunarity: f64) -> f32
-where
-    T: NoiseFn<f64, 3>,
-{
-    let mut total = 0.0;
-    let mut frequency = frequency;
-    let mut amplitude = 1.0;
-    let mut max_amplitude = 0.0;
-
-    for _ in 0..octaves {
-        let val = perlin.get([x as f64 * frequency, y as f64 * frequency, z as f64 * frequency]);
-
-        total += val * amplitude;
-        max_amplitude += amplitude;
-        frequency *= lacunarity;
-        amplitude /= 2.0;
-    }
-
-    total as f32 / max_amplitude as f32
-}
-
-fn generate_noise2d(type_noise: TypeNoise, seed: u32) -> Box<dyn NoiseFn<f64, 2>> {
-    match type_noise {
-        TypeNoise::PERLIN => Box::new(Perlin::new(seed)),
-        TypeNoise::SIMPLEX => Box::new(Simplex::new(seed)),
-        TypeNoise::OPENSIMPLEX => Box::new(OpenSimplex::new(seed)),
-        TypeNoise::SUPERSIMPLEX => Box::new(SuperSimplex::new(seed)),
-        TypeNoise::PERLINSURFLET => Box::new(PerlinSurflet::new(seed)),
-    }
-}
-
-fn generate_noise3d(type_noise: TypeNoise, seed: u32) -> Box<dyn NoiseFn<f64, 3>> {
-    match type_noise {
-        TypeNoise::PERLIN => Box::new(Perlin::new(seed)),
-        TypeNoise::SIMPLEX => Box::new(Simplex::new(seed)),
-        TypeNoise::OPENSIMPLEX => Box::new(OpenSimplex::new(seed)),
-        TypeNoise::SUPERSIMPLEX => Box::new(SuperSimplex::new(seed)),
-        TypeNoise::PERLINSURFLET => Box::new(PerlinSurflet::new(seed)),
-    }
-}
-
-#[pyfunction]
-pub fn noise_generate<'py>(
-    size: Vec<usize>,
-    type_noise: TypeNoise,
-    octaves: u8,
-    frequency: f64,
-    lacunarity: f64,
-    seed: Option<u32>,
-    py: Python,
-) -> PyResult<Py<PyArrayDyn<f32>>> {
-    let seed = seed.unwrap_or(rand::rng().random_range(1..=10000) as u32);
-    match size.len() {
-        2 => {
-            let mut array: Array2<f32> = Array2::zeros((size[0], size[1]));
-            let type_fn = generate_noise2d(type_noise, seed);
-            for ((x, y), value) in array.indexed_iter_mut() {
-                *value = noise_2d(&type_fn, x, y, octaves, frequency, lacunarity);
-            }
-            Ok(array.into_dyn().to_pyarray(py).into())
-        }
-        3 => {
-            let mut array: Array3<f32> = Array3::zeros((size[0], size[1], size[2]));
-            let type_fn = generate_noise3d(type_noise, seed);
-            for ((x, y, z), value) in array.indexed_iter_mut() {
-                *value = noise_3d(&type_fn, x, y, z, octaves, frequency, lacunarity);
-            }
-            Ok(array.into_dyn().to_pyarray(py).into())
-        }
-        _ => Err(pyo3::exceptions::PyValueError::new_err("Unsupported dimensions")),
-    }
-}

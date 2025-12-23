@@ -45,7 +45,8 @@ pub mod enums;
 pub mod errors;
 mod global_params;
 pub mod ops;
-
+pub use ops::svec_ops::line::line_draw::draw_lines;
+pub use ops::svec_ops::line::objects::{Point,Line};
 // Re-export common types and functions
 pub use ops::read::read;
 pub use ops::save::save;

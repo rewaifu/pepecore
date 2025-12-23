@@ -5,3 +5,5 @@ pub mod halftone;
 pub mod normalize;
 pub mod real_size;
 pub mod resize;
+pub mod line;
+pub mod noise;
