@@ -4,8 +4,9 @@ use crate::ops::svec_ops::line::objects::Point;
 pub fn bresenham(p0: &Point, p1: &Point, line_hash: &mut HashSet<(usize, usize)>) {
     let (x0, y0, s0) = (p0.x as isize, p0.y as isize, p0.size as f64);
     let (x1, y1, s1) = (p1.x as isize, p1.y as isize, p1.size as f64);
+
     if (s0 - s1).abs() < 1e-9 {
-        bresenham_fixed_circle(x0, y0, x1, y1, s0 as f64, line_hash);
+        bresenham_fixed_circle(x0, y0, x1, y1, s0, line_hash);
         return;
     }
 
@@ -22,35 +23,15 @@ pub fn bresenham(p0: &Point, p1: &Point, line_hash: &mut HashSet<(usize, usize)>
     let mut y = y0;
     let mut step: isize = 0;
 
-    while x != x1 || y != y1 {
-        let t = (denom - step as f64) / denom;
-        let size_f = s0 * t + s1 * (1.0 - t);
-        let radius_f = (size_f / 2.0).max(0.5);
-        let r_ceil = radius_f.ceil() as isize;
-        for oy in -r_ceil..=r_ceil {
-            let yf = oy as f64;
-            let inside = radius_f * radius_f - yf * yf;
-            if inside < 0.0 {
-                continue;
-            }
-            let x_extent = (inside.sqrt()).floor() as isize;
-            let frac = (inside.sqrt()) - (x_extent as f64);
+    loop {
+        let t = (step as f64) / denom;
+        let size_f = s0 * (1.0 - t) + s1 * t;
+        draw_circle(x, y, size_f, line_hash);
 
-            let extra = if frac >= 0.5 {
-                if ((x + y) & 1) == 0 { 1 } else { 0 }
-            } else { 0 };
-
-            let x_left = x - x_extent - extra as isize;
-            let x_right = x + x_extent + (if extra==1 {0} else {0}); // symmetric except extra on left
-
-            let yy = y + oy;
-            if yy < 0 { continue; }
-            let xs = if x_left < 0 { 0 } else { x_left } ;
-            for xx in xs..=x_right {
-                if xx < 0 { continue; }
-                line_hash.insert((xx as usize, yy as usize));
-            }
+        if x == x1 && y == y1 {
+            break;
         }
+
         let e2 = err * 2;
         if e2 > -dy {
             err -= dy;
@@ -71,30 +52,14 @@ fn bresenham_fixed_circle(x0: isize, y0: isize, x1: isize, y1: isize, size_f: f6
     let sy = if y0 < y1 { 1 } else { -1 };
     let mut err = dx - dy;
 
-    let radius_f = (size_f / 2.0).max(0.5);
-    let r_ceil = radius_f.ceil() as isize;
-
     let mut x = x0;
     let mut y = y0;
-    while x != x1 || y != y1 {
-        for oy in -r_ceil..=r_ceil {
-            let yf = oy as f64;
-            let inside = radius_f * radius_f - yf * yf;
-            if inside < 0.0 { continue; }
-            let x_extent = (inside.sqrt()).floor() as isize;
-            let frac = (inside.sqrt()) - (x_extent as f64);
-            let extra = if frac >= 0.5 {
-                if ((x + y) & 1) == 0 { 1 } else { 0 }
-            } else { 0 };
-            let x_left = x - x_extent - extra as isize;
-            let x_right = x + x_extent;
-            let yy = y + oy;
-            if yy < 0 { continue; }
-            let xs = if x_left < 0 { 0 } else { x_left } ;
-            for xx in xs..=x_right {
-                if xx < 0 { continue; }
-                line_hash.insert((xx as usize, yy as usize));
-            }
+
+    loop {
+        draw_circle(x, y, size_f, line_hash);
+
+        if x == x1 && y == y1 {
+            break;
         }
 
         let e2 = err * 2;
@@ -107,5 +72,35 @@ fn bresenham_fixed_circle(x0: isize, y0: isize, x1: isize, y1: isize, size_f: f6
             y += sy;
         }
     }
+}
 
+fn draw_circle(cx: isize, cy: isize, size_f: f64, line_hash: &mut HashSet<(usize, usize)>) {
+    let radius_f = (size_f / 2.0).max(0.5);
+    let r_ceil = radius_f.ceil() as isize;
+
+    for oy in -r_ceil..=r_ceil {
+        let yf = oy as f64;
+        let inside = radius_f * radius_f - yf * yf;
+        if inside < 0.0 {
+            continue;
+        }
+
+        let x_extent_f = inside.sqrt();
+        let x_extent = x_extent_f.round() as isize;
+
+        let x_left = cx - x_extent;
+        let x_right = cx + x_extent;
+        let yy = cy + oy;
+
+        // Проверяем границы перед конвертацией в usize
+        if yy < 0 {
+            continue;
+        }
+
+        for xx in x_left..=x_right {
+            if xx >= 0 {
+                line_hash.insert((xx as usize, yy as usize));
+            }
+        }
+    }
 }

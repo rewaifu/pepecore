@@ -1,7 +1,6 @@
 use numpy::ndarray::{ s};
-use numpy::{ PyReadonlyArray2, ToPyArray};
+use numpy::{ PyReadonlyArray2};
 use pyo3::{ PyResult,  pyfunction};
-use rand::Rng;
 
 #[pyfunction]
 pub fn best_tile(input: PyReadonlyArray2<f32>, tile_size: usize) -> PyResult<(usize, usize)> {
