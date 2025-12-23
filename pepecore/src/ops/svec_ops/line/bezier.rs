@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use crate::ops::svec_ops::line::objects::Point;
+use crate::ops::svec_ops::line::bresenham::bresenham;
 
 fn cubic_bezier(v0: f64, v1: f64, v2: f64, v3: f64, t: f64) -> f64 {
     let u = 1.0 - t;
@@ -28,47 +29,34 @@ pub fn bezier(
     let s3 = p3.size as f64;
 
     let mut t = 0.0;
+    let mut prev_point: Option<Point> = None;
+
     while t <= 1.0 {
         let fx = cubic_bezier(x0, x1, x2, x3, t);
         let fy = cubic_bezier(y0, y1, y2, y3, t);
         let fs = cubic_bezier(s0, s1, s2, s3, t);
 
-        let radius_f = (fs / 2.0).max(0.5);
-        let cx = fx.round() as isize;
-        let cy = fy.round() as isize;
+        let current_point = Point {
+            x: fx.round().max(0.0) as usize,
+            y: fy.round().max(0.0) as usize,
+            size: fs.round().max(1.0) as usize,
+        };
 
-        let r_ceil = radius_f.ceil() as isize;
-        for oy in -r_ceil..=r_ceil {
-            let yf = oy as f64;
-            let inside = radius_f * radius_f - yf * yf;
-            if inside < 0.0 {
-                continue;
-            }
-            let x_extent_f = inside.sqrt();
-            let x_extent = x_extent_f.floor() as isize;
-            let frac = x_extent_f - (x_extent as f64);
-            let extra = if frac >= 0.5 {
-                (((cx + cy + oy) & 1) == 0) as isize
-            } else {
-                0
-            };
-
-            let x_left = cx - x_extent - extra;
-            let x_right = cx + x_extent;
-            let yy = cy + oy;
-            if yy < 0 {
-                continue;
-            }
-
-            let mut xx = x_left.max(0);
-            while xx <= x_right {
-                if xx >= 0 {
-                    line_hash.insert((xx as usize, yy as usize));
-                }
-                xx += 1;
-            }
+        if let Some(prev) = prev_point {
+            bresenham(&prev, &current_point, line_hash);
         }
 
+        prev_point = Some(current_point);
         t += step;
+    }
+
+    // Убедимся что дошли до конечной точки
+    if let Some(prev) = prev_point {
+        let final_point = Point {
+            x: x3.round().max(0.0) as usize,
+            y: y3.round().max(0.0) as usize,
+            size: s3.round().max(1.0) as usize,
+        };
+        bresenham(&prev, &final_point, line_hash);
     }
 }
