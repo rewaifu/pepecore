@@ -20,7 +20,7 @@ pub fn py_noise<'py>(
         value.clone().into()
     }).collect();
     if len_shape == 2 {
-        let vec = py.allow_threads(|| 
+        let vec = py.detach(||
             create_noise_2d(
                 Shape::new(shape[0],shape[1],None),
                 octaves,
@@ -31,7 +31,7 @@ pub fn py_noise<'py>(
         Ok(vec.to_pyany::<f32>(py)?)
     }
     else if len_shape == 3 {
-        let vec = py.allow_threads(|| create_noise_3d(
+        let vec = py.detach(|| create_noise_3d(
             Shape::new(shape[0],shape[1],Some(shape[2])),
             octaves,
             &amplitudes,

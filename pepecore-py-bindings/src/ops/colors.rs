@@ -13,7 +13,7 @@ use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
 #[pyfunction(name = "cvt_color")]
 pub fn py_cvt_color<'py>(py: Python<'py>, img: Bound<'py, PyAny>, cvt_mode: ColorCVT) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;
-    py.allow_threads(|| cvt_color(&mut img, CVTColor::from(cvt_mode)));
+    py.detach(|| cvt_color(&mut img, CVTColor::from(cvt_mode)));
     Ok(match img.pixel_type() {
         PixelType::U8 => img.to_pyany::<u8>(py)?,
         PixelType::F32 => img.to_pyany::<f32>(py)?,
@@ -98,14 +98,14 @@ pub fn py_screentone<'py>(
 
     if let Some(angle) = angle {
         if let Some(scale) = scale {
-            py.allow_threads(|| ssaa_rotate_screentone(&mut img, dot_size, angle, &dot_type.into(), scale, resize_alg.into()));
+            py.detach(|| ssaa_rotate_screentone(&mut img, dot_size, angle, &dot_type.into(), scale, resize_alg.into()));
         } else {
-            py.allow_threads(|| rotate_screentone(&mut img, dot_size, angle, &dot_type.into()));
+            py.detach(|| rotate_screentone(&mut img, dot_size, angle, &dot_type.into()));
         }
     } else if let Some(scale) = scale {
-        py.allow_threads(|| ssaa_screentone(&mut img, dot_size, &dot_type.into(), scale, resize_alg.into()));
+        py.detach(|| ssaa_screentone(&mut img, dot_size, &dot_type.into(), scale, resize_alg.into()));
     } else {
-        py.allow_threads(|| screentone(&mut img, dot_size, &dot_type.into()));
+        py.detach(|| screentone(&mut img, dot_size, &dot_type.into()));
     }
 
     Ok(match img.pixel_type() {
@@ -132,16 +132,16 @@ pub fn py_halftone<'py>(
 
     if let Some(angles) = angles {
         if let Some(scale) = scale {
-            py.allow_threads(|| {
+            py.detach(|| {
                 ssaa_rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types, scale, resize_alg.into()).unwrap()
             });
         } else {
-            py.allow_threads(|| rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types).unwrap());
+            py.detach(|| rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types).unwrap());
         }
     } else if let Some(scale) = scale {
-        py.allow_threads(|| ssaa_halftone(&mut img, &dot_sizes, &dot_types, scale, resize_alg.into()).unwrap());
+        py.detach(|| ssaa_halftone(&mut img, &dot_sizes, &dot_types, scale, resize_alg.into()).unwrap());
     } else {
-        py.allow_threads(|| halftone(&mut img, &dot_sizes, &dot_types).unwrap());
+        py.detach(|| halftone(&mut img, &dot_sizes, &dot_types).unwrap());
     }
 
     Ok(match img.pixel_type() {

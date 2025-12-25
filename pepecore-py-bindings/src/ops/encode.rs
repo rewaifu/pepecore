@@ -1,58 +1,81 @@
 use crate::structure::svec_traits::{PySvec, SvecPyArray};
-use pepecore::encode::{Encoder, JpegEncodeOptions, JpegSamplingFactor};
 use pepecore_array::PixelType;
 use pyo3::prelude::*;
+use pepecore::enums::YCbCrRatio;
+use pepecore::jpeg_compress;
+use pepecore::ops::svec_ops::jpeg::quantize::QuantizationTableType;
 
 #[pyclass(name = "JpegSamplingFactor")]
 #[derive(Clone, Copy, Debug)]
+#[allow(non_camel_case_types)]
 pub enum JpegSamplingFactorPy {
-    R_4_4_4,
-    R_4_4_0,
-    R_4_4_1,
-    R_4_2_2,
-    R_4_2_1,
-    R_4_2_0,
-    R_4_1_1,
-    R_4_1_0,
+    R444,
+    R440,
+    R441,
+    R422,
+    R420,
+    R411,
+    R410,
 }
-
-impl From<JpegSamplingFactorPy> for JpegSamplingFactor {
+#[pyclass(name = "QuantizeTable")]
+#[derive(Clone, Copy, Debug)]
+#[allow(non_camel_case_types)]
+pub enum QuantizeTablePy {
+    Default,
+    Flat,
+    CustomMsSsim,
+    CustomPsnrHvs,
+    ImageMagick,
+    KleinSilversteinCarney,
+    DentalXRays,
+    VisualDetectionModel,
+    ImprovedDetectionModel,
+}
+impl From<QuantizeTablePy> for QuantizationTableType{
+    
+    fn from(value:QuantizeTablePy)->Self{
+        match value {
+            QuantizeTablePy::Default=>QuantizationTableType::Default,
+            QuantizeTablePy::Flat=>QuantizationTableType::Flat,
+            QuantizeTablePy::CustomMsSsim=>QuantizationTableType::CustomMsSsim,
+            QuantizeTablePy::CustomPsnrHvs=>QuantizationTableType::CustomPsnrHvs,
+            QuantizeTablePy::ImageMagick=>QuantizationTableType::ImageMagick,
+            QuantizeTablePy::KleinSilversteinCarney=>QuantizationTableType::KleinSilversteinCarney,
+            QuantizeTablePy::DentalXRays=>QuantizationTableType::DentalXRays,
+            QuantizeTablePy::VisualDetectionModel=>QuantizationTableType::VisualDetectionModel,
+            QuantizeTablePy::ImprovedDetectionModel=>QuantizationTableType::ImprovedDetectionModel,
+        }
+    }
+}
+impl From<JpegSamplingFactorPy> for YCbCrRatio {
     fn from(value: JpegSamplingFactorPy) -> Self {
         match value {
-            JpegSamplingFactorPy::R_4_4_4 => JpegSamplingFactor::R_4_4_4,
-            JpegSamplingFactorPy::R_4_4_0 => JpegSamplingFactor::R_4_4_0,
-            JpegSamplingFactorPy::R_4_4_1 => JpegSamplingFactor::R_4_4_1,
-            JpegSamplingFactorPy::R_4_2_2 => JpegSamplingFactor::R_4_2_2,
-            JpegSamplingFactorPy::R_4_2_1 => JpegSamplingFactor::R_4_2_1,
-            JpegSamplingFactorPy::R_4_2_0 => JpegSamplingFactor::R_4_2_0,
-            JpegSamplingFactorPy::R_4_1_1 => JpegSamplingFactor::R_4_1_1,
-            JpegSamplingFactorPy::R_4_1_0 => JpegSamplingFactor::R_4_1_0,
+            JpegSamplingFactorPy::R444 => YCbCrRatio::R444,
+            JpegSamplingFactorPy::R440 => YCbCrRatio::R440,
+            JpegSamplingFactorPy::R441 => YCbCrRatio::R441,
+            JpegSamplingFactorPy::R422 => YCbCrRatio::R422,
+            JpegSamplingFactorPy::R420 => YCbCrRatio::R420,
+            JpegSamplingFactorPy::R411 => YCbCrRatio::R411,
+            JpegSamplingFactorPy::R410 => YCbCrRatio::R410,
         }
     }
 }
 
 #[pyfunction(name = "jpeg_encode")]
-#[pyo3(signature = (img, quality = 100, progressive =  true, sampling_factor = JpegSamplingFactorPy::R_4_2_0))]
+#[pyo3(signature = (img, quality = 100, qt=QuantizeTablePy::Default, sampling_factor = JpegSamplingFactorPy::R420))]
 pub fn py_jpeg_encode<'py>(
     py: Python<'py>,
     img: Bound<'py, PyAny>,
     quality: u8,
-    progressive: bool,
+    qt: QuantizeTablePy,
     sampling_factor: JpegSamplingFactorPy,
 ) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;
+    let pixel_type = img.pixel_type();
 
-    let options = JpegEncodeOptions {
-        quality,
-        progressive,
-        sampling_factor: sampling_factor.into(),
-    };
+    py.detach(|| jpeg_compress(&mut img, quality,&qt.into(),&sampling_factor.into()));
 
-    let mut img = py
-        .allow_threads(|| Encoder::encode_jpeg(&mut img, options))
-        .expect("Failed to save image");
-
-    Ok(match img.pixel_type() {
+    Ok(match pixel_type {
         PixelType::U8 => img.to_pyany::<u8>(py)?,
         PixelType::F32 => {
             img.as_f32();

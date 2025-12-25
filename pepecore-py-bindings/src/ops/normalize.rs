@@ -7,7 +7,7 @@ use pyo3::{Bound, PyAny, PyResult, Python, pyfunction};
 #[pyo3(signature = (img, scale = 1.0))]
 pub fn normalize<'py>(py: Python<'py>, img: Bound<'py, PyAny>, scale: f32) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;
-    py.allow_threads(|| img.normalize(scale));
+    py.detach(|| img.normalize(scale));
     Ok(match img.pixel_type() {
         PixelType::U8 => img.to_pyany::<u8>(py)?,
         PixelType::F32 => img.to_pyany::<f32>(py)?,

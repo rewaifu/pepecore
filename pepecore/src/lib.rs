@@ -52,8 +52,8 @@ pub use ops::read::read;
 pub use ops::save::save;
 pub use ops::svec_ops::real_size;
 pub use global_params::rayon_mode;
-#[cfg(feature = "encode")]
-pub use ops::encode;
+
+pub use ops::svec_ops::jpeg::encode::jpeg_compress;
 pub use ops::svec_ops::color_levels;
 pub use ops::svec_ops::crop::crop;
 pub use ops::svec_ops::cvtcolor::cvt_color;
