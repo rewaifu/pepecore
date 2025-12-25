@@ -75,14 +75,12 @@ impl From<PyPoint> for Point{
 }
 fn gather_line_cmds<'py>(lines_obj: &Bound<'py, PyAny>) -> PyResult<Vec<Line>> {
     fn one<'py>(o: &Bound<'py, PyAny>) -> PyResult<Line> {
-        // Пытаемся извлечь LineDraw
         if let Ok(ld) = o.extract::<PyRef<'py, PyBresenham>>() {
             let l = *ld;
             return Ok(Line::Bresenham (
                 l.p0.into(),l.p1.into()
             ));
         }
-        // Пытаемся извлечь BezierDraw
         if let Ok(bd) = o.extract::<PyRef<'py, PyBezier>>() {
             let b = *bd;
             return Ok(Line::Bezier(
@@ -95,9 +93,8 @@ fn gather_line_cmds<'py>(lines_obj: &Bound<'py, PyAny>) -> PyResult<Vec<Line>> {
         )))
     }
 
-    // Если это последовательность — итерируем; иначе считаем одиночным объектом
-    if let Ok(seq) = lines_obj.downcast::<PySequence>() {
-        let mut out = Vec::with_capacity(seq.len().unwrap_or(0) as usize);
+    if let Ok(seq) = lines_obj.cast::<PySequence>() {
+        let mut out = Vec::with_capacity(seq.len().unwrap_or(0));
         for it in seq.try_iter()? {
             let item = it?;
             out.push(one(&item)?);
@@ -126,6 +123,6 @@ pub fn py_line<'py>(
 ) -> PyResult<Bound<'py, PyAny>> {
     let lines = gather_line_cmds(&lines)?;
     let mut img = SVec::new(Shape::new(h,w,None),ImgData::U8(vec![0;h*w]));
-    py.allow_threads(|| draw(&lines,&mut img));
+    py.detach(|| draw(&lines,&mut img));
     Ok(img.to_pyany::<u8>(py)?)
 }

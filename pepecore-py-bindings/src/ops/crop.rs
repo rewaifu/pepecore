@@ -13,7 +13,7 @@ pub fn py_crop<'py>(
     h: usize,
 ) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;
-    py.allow_threads(|| crop(&mut img, x, y, w, h).unwrap());
+    py.detach(|| crop(&mut img, x, y, w, h).unwrap());
     Ok(match img.pixel_type() {
         PixelType::U8 => img.to_pyany::<u8>(py)?,
         PixelType::F32 => img.to_pyany::<f32>(py)?,

@@ -1,6 +1,7 @@
 mod ops;
 mod structure;
 
+use crate::ops::encode::QuantizeTablePy;
 use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat, ResizesAlg, ResizesFilter, TypeNoise};
 
 use crate::ops::encode::JpegSamplingFactorPy;
@@ -33,6 +34,7 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::original_size::real_h, m)?)?;
     m.add_function(wrap_pyfunction!(ops::original_size::real_w, m)?)?;
     m.add_function(wrap_pyfunction!(ops::lines::py_line,m)?)?;
+    m.add_function(wrap_pyfunction!(ops::read_write::read_tiler,m)?)?;
     m.add_class::<PyPoint>()?;
     m.add_class::<PyBresenham>()?;
     m.add_class::<PyBezier>()?;
@@ -42,6 +44,7 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DotTypePy>()?;
     m.add_class::<TypeNoise>()?;
     m.add_class::<JpegSamplingFactorPy>()?;
+    m.add_class::<QuantizeTablePy>()?;
     m.add_class::<ResizesFilter>()?;
     m.add_class::<ResizesAlg>()?;
     Ok(())

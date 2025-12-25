@@ -42,3 +42,14 @@ pub enum DotType {
     LINE,
     INVLINE,
 }
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum YCbCrRatio {
+    R444,
+    R440,
+    R441,
+    R422,
+    R420,
+    R411,
+    R410
+}

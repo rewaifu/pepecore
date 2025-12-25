@@ -1,6 +1,5 @@
 use numpy::{Element, PyArrayDyn, PyArrayMethods, PyUntypedArrayMethods};
 use pepecore_array::{ImgData, SVec, Shape};
-use pyo3::prelude::PyAnyMethods;
 use pyo3::{Bound, IntoPyObjectExt, PyAny, PyResult, Python, exceptions::PyRuntimeError};
 use rayon::prelude::*;
 use std::mem::size_of;
@@ -61,7 +60,7 @@ where
     if readonly.is_contiguous() {
         let dst_ptr = UnsafeMutSend(buffer.as_mut_ptr());
         let src_ptr = UnsafeSend(readonly.data());
-        py.allow_threads(|| unsafe {
+        py.detach(|| unsafe {
             buffer.set_len(total);
             parallel_memcpy_typed(src_ptr, dst_ptr, total);
         });
@@ -74,11 +73,11 @@ where
 
 impl PySvec for Bound<'_, PyAny> {
     fn to_svec(self, py: Python) -> PyResult<SVec> {
-        if let Ok(np_array) = self.downcast::<PyArrayDyn<f32>>() {
+        if let Ok(np_array) = self.cast::<PyArrayDyn<f32>>() {
             alloc_from_np(py, np_array)
-        } else if let Ok(np_array) = self.downcast::<PyArrayDyn<u8>>() {
+        } else if let Ok(np_array) = self.cast::<PyArrayDyn<u8>>() {
             alloc_from_np(py, np_array)
-        } else if let Ok(np_array) = self.downcast::<PyArrayDyn<u16>>() {
+        } else if let Ok(np_array) = self.cast::<PyArrayDyn<u16>>() {
             alloc_from_np(py, np_array)
         } else {
             Err(PyRuntimeError::new_err("Unsupported type: Expected NumPy ndarray or list"))
@@ -107,7 +106,7 @@ impl SvecPyArray for SVec {
             // Array2::to_pyarray()
             let new_data = UnsafeMutSend(arr.data());
             let len = self.get_len();
-            py.allow_threads(|| parallel_memcpy_typed(data, new_data, len));
+            py.detach(|| parallel_memcpy_typed(data, new_data, len));
             arr
         };
 

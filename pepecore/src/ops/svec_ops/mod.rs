@@ -7,3 +7,4 @@ pub mod real_size;
 pub mod resize;
 pub mod line;
 pub mod noise;
+pub mod jpeg;

@@ -1,17 +1,16 @@
 [package]
 name = "pepecore-py-bindings"
-version = "1.2.0"
+version = "1.2.1"
 edition.workspace = true
 publish.workspace = true
 
 [dependencies]
 libc = "1.0.0-alpha.1"
-numpy = "0.25.0"
+numpy = "0.27.1"
 pepecore.workspace = true
 pepecore-array.workspace = true
-pyo3 = { version = "0.25.1", features = ["abi3-py310", "extension-module"] }
+pyo3 = { version = "0.27.2", features = ["abi3-py310", "extension-module"] }
 rayon = "1.10.0"
-rand = "0.9.1"
 fastnoise-lite = "1.1.1"
 fast_image_resize = "4.2.3"
 

@@ -128,16 +128,24 @@ def noise(
 ) -> np.ndarray: ...
 
 class JpegSamplingFactor(IntEnum):
-    R_4_4_4 = 0
-    R_4_4_0 = 1
-    R_4_4_1 = 2
-    R_4_2_2 = 3
-    R_4_2_1 = 4
-    R_4_2_0 = 5
-    R_4_1_1 = 6
-    R_4_1_0 = 7
-
-def jpeg_encode(img: np.ndarray, quality: int = 100, progressive: bool = True, sampling_factor: JpegSamplingFactor = ...) -> np.ndarray: ...
+    R444 = 0
+    R440 = 1
+    R441 = 2
+    R422 = 3
+    R420 = 4
+    R411 = 5
+    R410 = 6
+class QuantizeTable(IntEnum):
+        Default = 0
+        Flat = 1
+        CustomMsSsim = 2
+        CustomPsnrHvs = 3
+        ImageMagick = 4
+        KleinSilversteinCarney = 5
+        DentalXRays = 6
+        VisualDetectionModel = 7
+        ImprovedDetectionModel = 8
+def jpeg_encode(img: np.ndarray, quality: int = 100, qt: QuantizeTable=..., sampling_factor: JpegSamplingFactor = ...) -> np.ndarray: ...
 def resize(img: np.ndarray, h: int, w: int, resize_alg: ResizesAlg = ..., alpha: bool = True) -> np.ndarray: ...
 def rayon_mode(on:bool = True) -> None:...
 def normalize(img: np.ndarray, scale: float) -> np.ndarray: ...
@@ -153,6 +161,7 @@ class Bezier:
     def __init__(self,p0:Point,p1:Point,p2:Point,p3:Point,step:float):...
 
 def line(lines:Sequence[Bresenham|Bezier],h:int,w:int)
+def read_tiler(path: str | Path, color_mode: ImgColor = ..., img_format: ImgFormat = ...,tile_size: usize):...
 __all__ = [
     'CVTColor',
     'DotType',
@@ -182,4 +191,5 @@ __all__ = [
     'Bezier',
     'Point',
     'line'
+    'read_tiler'
 ]
