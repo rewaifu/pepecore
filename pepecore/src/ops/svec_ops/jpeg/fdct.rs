@@ -135,14 +135,8 @@ pub fn fdct(data: &mut [i16; 64]) {
         data2[offset + 4] = (tmp10 - tmp11) << PASS1_BITS;
 
         let z1 = (tmp12 + tmp13) * FIX_0_541196100;
-        data2[offset + 2] = descale(
-            z1 + (tmp13 * FIX_0_765366865),
-            CONST_BITS - PASS1_BITS,
-        );
-        data2[offset + 6] = descale(
-            z1 + (tmp12 * -FIX_1_847759065),
-            CONST_BITS - PASS1_BITS,
-        );
+        data2[offset + 2] = descale(z1 + (tmp13 * FIX_0_765366865), CONST_BITS - PASS1_BITS);
+        data2[offset + 6] = descale(z1 + (tmp12 * -FIX_1_847759065), CONST_BITS - PASS1_BITS);
 
         /* Odd part per figure 8 --- note paper omits factor of sqrt(2).
          * cK represents cos(K*pi/16).
@@ -201,14 +195,8 @@ pub fn fdct(data: &mut [i16; 64]) {
         data[DCT_SIZE * 4 + x] = into_el(descale(tmp10 - tmp11, PASS1_BITS));
 
         let z1 = (tmp12 + tmp13) * FIX_0_541196100;
-        data[DCT_SIZE * 2 + x] = into_el(descale(
-            z1 + tmp13 * FIX_0_765366865,
-            CONST_BITS + PASS1_BITS,
-        ));
-        data[DCT_SIZE * 6 + x] = into_el(descale(
-            z1 + tmp12 * -FIX_1_847759065,
-            CONST_BITS + PASS1_BITS,
-        ));
+        data[DCT_SIZE * 2 + x] = into_el(descale(z1 + tmp13 * FIX_0_765366865, CONST_BITS + PASS1_BITS));
+        data[DCT_SIZE * 6 + x] = into_el(descale(z1 + tmp12 * -FIX_1_847759065, CONST_BITS + PASS1_BITS));
 
         /* Odd part per figure 8 --- note paper omits factor of sqrt(2).
          * cK represents cos(K*pi/16).
@@ -239,7 +227,6 @@ pub fn fdct(data: &mut [i16; 64]) {
         data[DCT_SIZE * 1 + x] = into_el(descale(tmp7 + z1 + z4, CONST_BITS + PASS1_BITS));
     }
 }
-
 
 const SCALE_BITS: i32 = 512 + 65536 + (128 << 17);
 
@@ -336,8 +323,8 @@ pub fn idct_int(in_vector: &mut [i32; 64], out_vector: &mut [i16], stride: usize
         t1 = wa(t1, wa(p2, p4));
         t0 = wa(t0, wa(p1, p3));
 
-        in_vector[ptr]      = ws(wa(x0, t3), 0) >> 10;
-        in_vector[ptr + 8]  = ws(wa(x1, t2), 0) >> 10;
+        in_vector[ptr] = ws(wa(x0, t3), 0) >> 10;
+        in_vector[ptr + 8] = ws(wa(x1, t2), 0) >> 10;
         in_vector[ptr + 16] = ws(wa(x2, t1), 0) >> 10;
         in_vector[ptr + 24] = ws(wa(x3, t0), 0) >> 10;
         in_vector[ptr + 32] = ws(ws(x3, t0), 0) >> 10;
@@ -392,11 +379,7 @@ pub fn idct_int(in_vector: &mut [i32; 64], out_vector: &mut [i16], stride: usize
         t1 = wa(t1, wa(p2, p4));
         t0 = wa(t0, wa(p1, p3));
 
-        let out: &mut [i16; 8] = out_vector
-            .get_mut(pos..pos + 8)
-            .unwrap()
-            .try_into()
-            .unwrap();
+        let out: &mut [i16; 8] = out_vector.get_mut(pos..pos + 8).unwrap().try_into().unwrap();
 
         out[0] = clamp(wa(x0, t3) >> 17);
         out[1] = clamp(wa(x1, t2) >> 17);

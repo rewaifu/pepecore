@@ -46,17 +46,17 @@ pub mod errors;
 mod global_params;
 pub mod ops;
 pub use ops::svec_ops::line::line_draw::draw_lines;
-pub use ops::svec_ops::line::objects::{Point,Line};
+pub use ops::svec_ops::line::objects::{Line, Point};
 // Re-export common types and functions
+pub use global_params::rayon_mode;
 pub use ops::read::read;
 pub use ops::save::save;
 pub use ops::svec_ops::real_size;
-pub use global_params::rayon_mode;
 
-pub use ops::svec_ops::jpeg::encode::jpeg_compress;
 pub use ops::svec_ops::color_levels;
 pub use ops::svec_ops::crop::crop;
 pub use ops::svec_ops::cvtcolor::cvt_color;
 pub use ops::svec_ops::halftone::halftone::{halftone, rotate_halftone, ssaa_halftone, ssaa_rotate_halftone};
 pub use ops::svec_ops::halftone::screentone::{rotate_screentone, screentone, ssaa_rotate_screentone, ssaa_screentone};
+pub use ops::svec_ops::jpeg::encode::jpeg_compress;
 pub use ops::svec_ops::normalize::NormalizeSVec;

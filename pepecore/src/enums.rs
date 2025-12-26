@@ -31,7 +31,7 @@ pub enum CVTColor {
     Bayer2RGB_RGGB,
     Bayer2RGB_BGGR,
     Bayer2RGB_GRBG,
-    Bayer2RGB_GBRG
+    Bayer2RGB_GBRG,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -51,5 +51,12 @@ pub enum YCbCrRatio {
     R422,
     R420,
     R411,
-    R410
+    R410,
+}
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum PaletteAlg{
+    OcTree,
+    MedianCut,
+    Wu,
+    MinMaxUniform
 }

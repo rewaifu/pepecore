@@ -132,9 +132,7 @@ pub fn py_halftone<'py>(
 
     if let Some(angles) = angles {
         if let Some(scale) = scale {
-            py.detach(|| {
-                ssaa_rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types, scale, resize_alg.into()).unwrap()
-            });
+            py.detach(|| ssaa_rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types, scale, resize_alg.into()).unwrap());
         } else {
             py.detach(|| rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types).unwrap());
         }
