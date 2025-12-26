@@ -137,24 +137,23 @@ pub fn bayer_to_rgb(img: &mut SVec, pattern: [usize; 4]) {
             let mut rgb_buf = vec![0u8; total_pixels * 3];
             let dst: *mut u8 = rgb_buf.as_mut_ptr();
             bayer_to_rgb_line(src, dst, w, h, pattern);
-            img.data=ImgData::U8(rgb_buf)
+            img.data = ImgData::U8(rgb_buf)
         }
         PixelType::F32 => {
             let src: *const f32 = img.get_mut_ptr::<f32>().unwrap();
             let mut rgb_buf = vec![0f32; total_pixels * 3];
             let dst: *mut f32 = rgb_buf.as_mut_ptr();
             bayer_to_rgb_line(src, dst, w, h, pattern);
-            img.data=ImgData::F32(rgb_buf)
+            img.data = ImgData::F32(rgb_buf)
         }
         PixelType::U16 => {
             let src: *const u16 = img.get_mut_ptr::<u16>().unwrap();
             let mut rgb_buf = vec![0u16; total_pixels * 3];
             let dst: *mut u16 = rgb_buf.as_mut_ptr();
             bayer_to_rgb_line(src, dst, w, h, pattern);
-            img.data=ImgData::U16(rgb_buf)        }
+            img.data = ImgData::U16(rgb_buf)
+        }
     }
 
     img.shape = Shape::new(h, w, Some(3)); // Теперь 3 канала RGB
 }
-
-

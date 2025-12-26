@@ -1,20 +1,13 @@
-use std::collections::HashSet;
-use crate::ops::svec_ops::line::objects::Point;
 use crate::ops::svec_ops::line::bresenham::bresenham;
+use crate::ops::svec_ops::line::objects::Point;
+use std::collections::HashSet;
 
 fn cubic_bezier(v0: f64, v1: f64, v2: f64, v3: f64, t: f64) -> f64 {
     let u = 1.0 - t;
     u * u * u * v0 + 3.0 * u * u * t * v1 + 3.0 * u * t * t * v2 + t * t * t * v3
 }
 
-pub fn bezier(
-    p0: &Point,
-    p1: &Point,
-    p2: &Point,
-    p3: &Point,
-    step: f64,
-    line_hash: &mut HashSet<(usize, usize)>,
-) {
+pub fn bezier(p0: &Point, p1: &Point, p2: &Point, p3: &Point, step: f64, line_hash: &mut HashSet<(usize, usize)>) {
     let x0 = p0.x as f64;
     let y0 = p0.y as f64;
     let s0 = p0.size as f64;

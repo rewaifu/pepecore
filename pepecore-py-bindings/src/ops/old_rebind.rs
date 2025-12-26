@@ -1,6 +1,6 @@
-use numpy::ndarray::{ s};
-use numpy::{ PyReadonlyArray2};
-use pyo3::{ PyResult,  pyfunction};
+use numpy::PyReadonlyArray2;
+use numpy::ndarray::s;
+use pyo3::{PyResult, pyfunction};
 
 #[pyfunction]
 pub fn best_tile(input: PyReadonlyArray2<f32>, tile_size: usize) -> PyResult<(usize, usize)> {
@@ -66,4 +66,3 @@ pub fn best_tile(input: PyReadonlyArray2<f32>, tile_size: usize) -> PyResult<(us
     }
     Ok((best_tile[1] as usize, best_tile[2] as usize))
 }
-

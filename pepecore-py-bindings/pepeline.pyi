@@ -145,6 +145,11 @@ class QuantizeTable(IntEnum):
         DentalXRays = 6
         VisualDetectionModel = 7
         ImprovedDetectionModel = 8
+class PaletteAlg(IntEnum):
+    OcTree=0
+    MedianCut=1
+    Wu=2
+    MinMaxUniform=3
 def jpeg_encode(img: np.ndarray, quality: int = 100, qt: QuantizeTable=..., sampling_factor: JpegSamplingFactor = ...) -> np.ndarray: ...
 def resize(img: np.ndarray, h: int, w: int, resize_alg: ResizesAlg = ..., alpha: bool = True) -> np.ndarray: ...
 def rayon_mode(on:bool = True) -> None:...
@@ -153,6 +158,7 @@ def real_hw(img:np.ndarray)->tuple[int, int] :...
 def real_h(img:np.ndarray)->int:...
 def real_w(img:np.ndarray)->int:...
 
+def get_palette(img:np.ndarray,num_ch:int,alg:PaletteAlg = PaletteAlg.OcTree)->np.ndarray:...
 class Point:
     def __init__(self,x:int,y:int,size:int):...
 class Bresenham:
@@ -190,6 +196,8 @@ __all__ = [
     'Bresenham',
     'Bezier',
     'Point',
-    'line'
-    'read_tiler'
+    'line',
+    'read_tiler',
+    'get_palette',
+    'PaletteAlg'
 ]

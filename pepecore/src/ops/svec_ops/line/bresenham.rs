@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use crate::ops::svec_ops::line::objects::Point;
+use std::collections::HashSet;
 
 pub fn bresenham(p0: &Point, p1: &Point, line_hash: &mut HashSet<(usize, usize)>) {
     let (x0, y0, s0) = (p0.x as isize, p0.y as isize, p0.size as f64);

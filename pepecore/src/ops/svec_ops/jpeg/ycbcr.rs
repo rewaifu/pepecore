@@ -1,20 +1,6 @@
-
 #[inline(always)]
 pub fn rgb_to_y(r: i32, g: i32, b: i32) -> u8 {
     (((19595 * r + 38470 * g + 7471 * b) + 0x7FFF) >> 16) as u8
-}
-
-#[inline(always)]
-pub fn rgb_to_ycbcr(r: i32, g: i32, b: i32) -> (u8, u8, u8) {
-    let y = 19595 * r + 38470 * g + 7471 * b;
-    let cb = -11059 * r - 21709 * g + 32768 * b + (128 << 16);
-    let cr = 32768 * r - 27439 * g - 5329 * b + (128 << 16);
-
-    (
-        ((y + 0x7FFF) >> 16) as u8,
-        ((cb + 0x7FFF) >> 16) as u8,
-        ((cr + 0x7FFF) >> 16) as u8,
-    )
 }
 
 #[inline(always)]
@@ -30,13 +16,7 @@ pub fn ycbcr_to_rgb(y: u8, cb: u8, cr: u8) -> (u8, u8, u8) {
     (r, g, b)
 }
 
-pub fn data_to_ycbcr(
-    data: &[u8],
-    h: usize,
-    w: usize,
-    ver: usize,
-    hor: usize,
-) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
+pub fn data_to_ycbcr(data: &[u8], h: usize, w: usize, ver: usize, hor: usize) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
     let chroma_w = (w + hor - 1) / hor;
     let chroma_h = (h + ver - 1) / ver;
 
@@ -76,16 +56,7 @@ pub fn data_to_ycbcr(
     (yc, cb, cr)
 }
 
-pub fn ycbcr_to_data(
-    yc: &[u8],
-    cb: &[u8],
-    cr: &[u8],
-    h: usize,
-    w: usize,
-    ver: usize,
-    hor: usize,
-    data: *mut u8,
-) {
+pub fn ycbcr_to_data(yc: &[u8], cb: &[u8], cr: &[u8], h: usize, w: usize, ver: usize, hor: usize, data: *mut u8) {
     let chroma_w = (w + hor - 1) / hor;
 
     unsafe {

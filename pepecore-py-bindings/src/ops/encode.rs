@@ -1,9 +1,9 @@
 use crate::structure::svec_traits::{PySvec, SvecPyArray};
-use pepecore_array::PixelType;
-use pyo3::prelude::*;
 use pepecore::enums::YCbCrRatio;
 use pepecore::jpeg_compress;
 use pepecore::ops::svec_ops::jpeg::quantize::QuantizationTableType;
+use pepecore_array::PixelType;
+use pyo3::prelude::*;
 
 #[pyclass(name = "JpegSamplingFactor")]
 #[derive(Clone, Copy, Debug)]
@@ -31,19 +31,18 @@ pub enum QuantizeTablePy {
     VisualDetectionModel,
     ImprovedDetectionModel,
 }
-impl From<QuantizeTablePy> for QuantizationTableType{
-    
-    fn from(value:QuantizeTablePy)->Self{
+impl From<QuantizeTablePy> for QuantizationTableType {
+    fn from(value: QuantizeTablePy) -> Self {
         match value {
-            QuantizeTablePy::Default=>QuantizationTableType::Default,
-            QuantizeTablePy::Flat=>QuantizationTableType::Flat,
-            QuantizeTablePy::CustomMsSsim=>QuantizationTableType::CustomMsSsim,
-            QuantizeTablePy::CustomPsnrHvs=>QuantizationTableType::CustomPsnrHvs,
-            QuantizeTablePy::ImageMagick=>QuantizationTableType::ImageMagick,
-            QuantizeTablePy::KleinSilversteinCarney=>QuantizationTableType::KleinSilversteinCarney,
-            QuantizeTablePy::DentalXRays=>QuantizationTableType::DentalXRays,
-            QuantizeTablePy::VisualDetectionModel=>QuantizationTableType::VisualDetectionModel,
-            QuantizeTablePy::ImprovedDetectionModel=>QuantizationTableType::ImprovedDetectionModel,
+            QuantizeTablePy::Default => QuantizationTableType::Default,
+            QuantizeTablePy::Flat => QuantizationTableType::Flat,
+            QuantizeTablePy::CustomMsSsim => QuantizationTableType::CustomMsSsim,
+            QuantizeTablePy::CustomPsnrHvs => QuantizationTableType::CustomPsnrHvs,
+            QuantizeTablePy::ImageMagick => QuantizationTableType::ImageMagick,
+            QuantizeTablePy::KleinSilversteinCarney => QuantizationTableType::KleinSilversteinCarney,
+            QuantizeTablePy::DentalXRays => QuantizationTableType::DentalXRays,
+            QuantizeTablePy::VisualDetectionModel => QuantizationTableType::VisualDetectionModel,
+            QuantizeTablePy::ImprovedDetectionModel => QuantizationTableType::ImprovedDetectionModel,
         }
     }
 }
@@ -73,7 +72,7 @@ pub fn py_jpeg_encode<'py>(
     let mut img = img.to_svec(py)?;
     let pixel_type = img.pixel_type();
 
-    py.detach(|| jpeg_compress(&mut img, quality,&qt.into(),&sampling_factor.into()));
+    py.detach(|| jpeg_compress(&mut img, quality, &qt.into(), &sampling_factor.into()));
 
     Ok(match pixel_type {
         PixelType::U8 => img.to_pyany::<u8>(py)?,

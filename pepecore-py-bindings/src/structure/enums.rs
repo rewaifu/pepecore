@@ -1,8 +1,8 @@
 use fast_image_resize::{FilterType, ResizeAlg};
+use fastnoise_lite::NoiseType;
 use pepecore::enums::ImgColor;
 use pepecore::enums::{CVTColor, DotType};
 use pyo3::pyclass;
-use fastnoise_lite::NoiseType;
 #[pyclass(name = "ImgColor")]
 #[derive(Clone, Copy)]
 pub enum ColorMode {
@@ -59,7 +59,7 @@ pub enum ColorCVT {
     Bayer2RGB_RGGB,
     Bayer2RGB_BGGR,
     Bayer2RGB_GRBG,
-    Bayer2RGB_GBRG
+    Bayer2RGB_GBRG,
 }
 
 impl From<ColorCVT> for CVTColor {
@@ -83,11 +83,10 @@ impl From<ColorCVT> for CVTColor {
             ColorCVT::RGB2Bayer_RGGB => CVTColor::RGB2Bayer_RGGB,
             ColorCVT::RGB2Bayer_GBRG => CVTColor::RGB2Bayer_GBRG,
             ColorCVT::RGB2Bayer_GRBG => CVTColor::RGB2Bayer_GRBG,
-            ColorCVT::Bayer2RGB_RGGB=>CVTColor::Bayer2RGB_RGGB,
-            ColorCVT::Bayer2RGB_BGGR=>CVTColor::Bayer2RGB_BGGR,
-            ColorCVT::Bayer2RGB_GBRG=>CVTColor::Bayer2RGB_GBRG,
-            ColorCVT::Bayer2RGB_GRBG=>CVTColor::Bayer2RGB_GRBG,
-
+            ColorCVT::Bayer2RGB_RGGB => CVTColor::Bayer2RGB_RGGB,
+            ColorCVT::Bayer2RGB_BGGR => CVTColor::Bayer2RGB_BGGR,
+            ColorCVT::Bayer2RGB_GBRG => CVTColor::Bayer2RGB_GBRG,
+            ColorCVT::Bayer2RGB_GRBG => CVTColor::Bayer2RGB_GRBG,
         }
     }
 }
@@ -122,17 +121,17 @@ pub enum TypeNoise {
     SUPERSIMPLEX2S = 3,
     CELLULAR = 4,
     VALUECUBIC = 5,
-    VALUE = 6
+    VALUE = 6,
 }
-impl From<TypeNoise> for NoiseType{
+impl From<TypeNoise> for NoiseType {
     fn from(value: TypeNoise) -> Self {
-        match value { 
+        match value {
             TypeNoise::PERLIN => NoiseType::Perlin,
-            TypeNoise::OPENSIMPLEX2=>NoiseType::OpenSimplex2,
-            TypeNoise::SUPERSIMPLEX2S=>NoiseType::OpenSimplex2S,
-            TypeNoise::CELLULAR=>NoiseType::Cellular,
-            TypeNoise::VALUE=>NoiseType::Value,
-            TypeNoise::VALUECUBIC=>NoiseType::ValueCubic
+            TypeNoise::OPENSIMPLEX2 => NoiseType::OpenSimplex2,
+            TypeNoise::SUPERSIMPLEX2S => NoiseType::OpenSimplex2S,
+            TypeNoise::CELLULAR => NoiseType::Cellular,
+            TypeNoise::VALUE => NoiseType::Value,
+            TypeNoise::VALUECUBIC => NoiseType::ValueCubic,
         }
     }
 }
