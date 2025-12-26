@@ -54,9 +54,9 @@ pub enum YCbCrRatio {
     R410,
 }
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum PaletteAlg{
+pub enum PaletteAlg {
     OcTree,
     MedianCut,
     Wu,
-    MinMaxUniform
+    MinMaxUniform,
 }

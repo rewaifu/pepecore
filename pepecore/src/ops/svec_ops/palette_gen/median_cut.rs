@@ -1,5 +1,5 @@
 use ahash::AHashMap;
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct Color {
     rgb: [u8; 3],
     count: u64,
@@ -39,9 +39,12 @@ impl Bucket {
 
     fn recompute(&mut self) {
         if self.colors.is_empty() {
-            self.rmin = 0; self.rmax = 0;
-            self.gmin = 0; self.gmax = 0;
-            self.bmin = 0; self.bmax = 0;
+            self.rmin = 0;
+            self.rmax = 0;
+            self.gmin = 0;
+            self.gmax = 0;
+            self.bmin = 0;
+            self.bmax = 0;
             self.total_count = 0;
             return;
         }
@@ -54,21 +57,41 @@ impl Bucket {
         let mut total = 0u64;
 
         for c in &self.colors {
-            let r = c.rgb[0]; if r < rmin { rmin = r } else if r > rmax { rmax = r }
-            let g = c.rgb[1]; if g < gmin { gmin = g } else if g > gmax { gmax = g }
-            let b = c.rgb[2]; if b < bmin { bmin = b } else if b > bmax { bmax = b }
+            let r = c.rgb[0];
+            if r < rmin {
+                rmin = r
+            } else if r > rmax {
+                rmax = r
+            }
+            let g = c.rgb[1];
+            if g < gmin {
+                gmin = g
+            } else if g > gmax {
+                gmax = g
+            }
+            let b = c.rgb[2];
+            if b < bmin {
+                bmin = b
+            } else if b > bmax {
+                bmax = b
+            }
             total += c.count;
         }
 
-        self.rmin = rmin; self.rmax = rmax;
-        self.gmin = gmin; self.gmax = gmax;
-        self.bmin = bmin; self.bmax = bmax;
+        self.rmin = rmin;
+        self.rmax = rmax;
+        self.gmin = gmin;
+        self.gmax = gmax;
+        self.bmin = bmin;
+        self.bmax = bmax;
         self.total_count = total;
     }
     fn ranges(&self) -> (u8, u8, u8) {
-        (self.rmax.saturating_sub(self.rmin),
-         self.gmax.saturating_sub(self.gmin),
-         self.bmax.saturating_sub(self.bmin))
+        (
+            self.rmax.saturating_sub(self.rmin),
+            self.gmax.saturating_sub(self.gmin),
+            self.bmax.saturating_sub(self.bmin),
+        )
     }
 
     fn max_range(&self) -> u8 {
@@ -78,7 +101,13 @@ impl Bucket {
 
     fn channel_with_max_range(&self) -> usize {
         let (r, g, b) = self.ranges();
-        if r >= g && r >= b { 0 } else if g >= r && g >= b { 1 } else { 2 }
+        if r >= g && r >= b {
+            0
+        } else if g >= r && g >= b {
+            1
+        } else {
+            2
+        }
     }
 
     fn average_color(&self) -> [f32; 3] {
@@ -88,22 +117,18 @@ impl Bucket {
         let mut rs: f32 = 0.0;
         let mut gs: f32 = 0.0;
         let mut bs: f32 = 0.0;
-        let mut total: f32 = 0.0 ;
+        let mut total: f32 = 0.0;
         for c in &self.colors {
-            rs += c.rgb[0] as f32 * c.count as f32 ;
-            gs += c.rgb[1] as f32  * c.count as f32 ;
-            bs += c.rgb[2] as f32  * c.count as f32 ;
-            total += c.count as f32 ;
+            rs += c.rgb[0] as f32 * c.count as f32;
+            gs += c.rgb[1] as f32 * c.count as f32;
+            bs += c.rgb[2] as f32 * c.count as f32;
+            total += c.count as f32;
         }
         if total == 0.0 {
             return [0.0, 0.0, 0.0];
         }
-        total*=255.0;
-        [
-            (rs / total) ,
-            (gs / total),
-            (bs / total),
-        ]
+        total *= 255.0;
+        [(rs / total), (gs / total), (bs / total)]
     }
     fn split(mut self) -> (Bucket, Bucket) {
         if self.colors.len() <= 1 {
@@ -172,18 +197,13 @@ pub fn median_cut(colors: Vec<Color>, target_colors: usize) -> Vec<f32> {
     }
     let mut buckets: Vec<Bucket> = vec![Bucket::new(colors)];
     while buckets.len() < target_colors {
-        let (idx, _) = buckets
-            .iter()
-            .enumerate()
-            .max_by_key(|(_, b)| b.max_range())
-            .unwrap();
+        let (idx, _) = buckets.iter().enumerate().max_by_key(|(_, b)| b.max_range()).unwrap();
         if buckets[idx].max_range() == 0 {
             break;
         }
         let bucket = buckets.remove(idx);
         let (left, right) = bucket.split();
         if left.colors.is_empty() || right.colors.is_empty() {
-
             buckets.push(left);
             buckets.push(right);
             break;
@@ -193,8 +213,8 @@ pub fn median_cut(colors: Vec<Color>, target_colors: usize) -> Vec<f32> {
         }
     }
 
-    let mut result = Vec::with_capacity(target_colors*3);
-    for b in buckets{
+    let mut result = Vec::with_capacity(target_colors * 3);
+    for b in buckets {
         result.extend_from_slice(&b.average_color())
     }
     result
@@ -212,7 +232,7 @@ mod tests {
             "/run/media/umzi/H/nahuy_pixiv/WOSManga_train_test/hq/000012.png",
             ImgColor::RGB,
         )
-            .unwrap();
+        .unwrap();
         let data = img.get_data::<u8>().unwrap();
         let colors = collect_colors(data);
         let median = median_cut(colors, 8);

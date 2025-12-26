@@ -37,7 +37,7 @@ impl OctreeNode {
         if self.pixel_count == 0 {
             return [0.0, 0.0, 0.0];
         }
-        let count = self.pixel_count as f32*255.0;
+        let count = self.pixel_count as f32 * 255.0;
         [
             self.red_sum as f32 / count,
             self.green_sum as f32 / count,
@@ -248,7 +248,6 @@ impl OctreeQuantizer {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

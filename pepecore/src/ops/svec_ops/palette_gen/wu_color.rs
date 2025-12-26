@@ -166,41 +166,64 @@ impl WuQuantizer {
 
     fn bottom(&self, cube: &Box_, dir: usize, mmt: &[i64]) -> i64 {
         match dir {
-            RED => -mmt[self.get_index(cube.r0 as usize, cube.g1 as usize, cube.b1 as usize)]
-                + mmt[self.get_index(cube.r0 as usize, cube.g1 as usize, cube.b0 as usize)]
-                + mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b1 as usize)]
-                - mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b0 as usize)],
-            GREEN => -mmt[self.get_index(cube.r1 as usize, cube.g0 as usize, cube.b1 as usize)]
-                + mmt[self.get_index(cube.r1 as usize, cube.g0 as usize, cube.b0 as usize)]
-                + mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b1 as usize)]
-                - mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b0 as usize)],
-            BLUE => -mmt[self.get_index(cube.r1 as usize, cube.g1 as usize, cube.b0 as usize)]
-                + mmt[self.get_index(cube.r1 as usize, cube.g0 as usize, cube.b0 as usize)]
-                + mmt[self.get_index(cube.r0 as usize, cube.g1 as usize, cube.b0 as usize)]
-                - mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b0 as usize)],
+            RED => {
+                -mmt[self.get_index(cube.r0 as usize, cube.g1 as usize, cube.b1 as usize)]
+                    + mmt[self.get_index(cube.r0 as usize, cube.g1 as usize, cube.b0 as usize)]
+                    + mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b1 as usize)]
+                    - mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b0 as usize)]
+            }
+            GREEN => {
+                -mmt[self.get_index(cube.r1 as usize, cube.g0 as usize, cube.b1 as usize)]
+                    + mmt[self.get_index(cube.r1 as usize, cube.g0 as usize, cube.b0 as usize)]
+                    + mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b1 as usize)]
+                    - mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b0 as usize)]
+            }
+            BLUE => {
+                -mmt[self.get_index(cube.r1 as usize, cube.g1 as usize, cube.b0 as usize)]
+                    + mmt[self.get_index(cube.r1 as usize, cube.g0 as usize, cube.b0 as usize)]
+                    + mmt[self.get_index(cube.r0 as usize, cube.g1 as usize, cube.b0 as usize)]
+                    - mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, cube.b0 as usize)]
+            }
             _ => 0,
         }
     }
 
     fn top(&self, cube: &Box_, dir: usize, pos: usize, mmt: &[i64]) -> i64 {
         match dir {
-            RED => mmt[self.get_index(pos, cube.g1 as usize, cube.b1 as usize)]
-                - mmt[self.get_index(pos, cube.g1 as usize, cube.b0 as usize)]
-                - mmt[self.get_index(pos, cube.g0 as usize, cube.b1 as usize)]
-                + mmt[self.get_index(pos, cube.g0 as usize, cube.b0 as usize)],
-            GREEN => mmt[self.get_index(cube.r1 as usize, pos, cube.b1 as usize)]
-                - mmt[self.get_index(cube.r1 as usize, pos, cube.b0 as usize)]
-                - mmt[self.get_index(cube.r0 as usize, pos, cube.b1 as usize)]
-                + mmt[self.get_index(cube.r0 as usize, pos, cube.b0 as usize)],
-            BLUE => mmt[self.get_index(cube.r1 as usize, cube.g1 as usize, pos)]
-                - mmt[self.get_index(cube.r1 as usize, cube.g0 as usize, pos)]
-                - mmt[self.get_index(cube.r0 as usize, cube.g1 as usize, pos)]
-                + mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, pos)],
+            RED => {
+                mmt[self.get_index(pos, cube.g1 as usize, cube.b1 as usize)]
+                    - mmt[self.get_index(pos, cube.g1 as usize, cube.b0 as usize)]
+                    - mmt[self.get_index(pos, cube.g0 as usize, cube.b1 as usize)]
+                    + mmt[self.get_index(pos, cube.g0 as usize, cube.b0 as usize)]
+            }
+            GREEN => {
+                mmt[self.get_index(cube.r1 as usize, pos, cube.b1 as usize)]
+                    - mmt[self.get_index(cube.r1 as usize, pos, cube.b0 as usize)]
+                    - mmt[self.get_index(cube.r0 as usize, pos, cube.b1 as usize)]
+                    + mmt[self.get_index(cube.r0 as usize, pos, cube.b0 as usize)]
+            }
+            BLUE => {
+                mmt[self.get_index(cube.r1 as usize, cube.g1 as usize, pos)]
+                    - mmt[self.get_index(cube.r1 as usize, cube.g0 as usize, pos)]
+                    - mmt[self.get_index(cube.r0 as usize, cube.g1 as usize, pos)]
+                    + mmt[self.get_index(cube.r0 as usize, cube.g0 as usize, pos)]
+            }
             _ => 0,
         }
     }
 
-    fn maximize(&self, cube: &Box_, dir: usize, first: i32, last: i32, cut: &mut i32, whole_r: i64, whole_g: i64, whole_b: i64, whole_w: i64) -> f32 {
+    fn maximize(
+        &self,
+        cube: &Box_,
+        dir: usize,
+        first: i32,
+        last: i32,
+        cut: &mut i32,
+        whole_r: i64,
+        whole_g: i64,
+        whole_b: i64,
+        whole_w: i64,
+    ) -> f32 {
         let base_r = self.bottom(cube, dir, &self.mr);
         let base_g = self.bottom(cube, dir, &self.mg);
         let base_b = self.bottom(cube, dir, &self.mb);
@@ -215,7 +238,8 @@ impl WuQuantizer {
             if half_w == 0 {
                 continue;
             }
-            let mut temp = (half_r as f32 * half_r as f32 + half_g as f32 * half_g as f32 + half_b as f32 * half_b as f32) / half_w as f32;
+            let mut temp =
+                (half_r as f32 * half_r as f32 + half_g as f32 * half_g as f32 + half_b as f32 * half_b as f32) / half_w as f32;
             half_r = whole_r - half_r;
             half_g = whole_g - half_g;
             half_b = whole_b - half_b;
@@ -223,7 +247,8 @@ impl WuQuantizer {
             if half_w == 0 {
                 continue;
             }
-            temp += (half_r as f32 * half_r as f32 + half_g as f32 * half_g as f32 + half_b as f32 * half_b as f32) / half_w as f32;
+            temp +=
+                (half_r as f32 * half_r as f32 + half_g as f32 * half_g as f32 + half_b as f32 * half_b as f32) / half_w as f32;
             if temp > maxx {
                 maxx = temp;
                 *cut = i as i32;
@@ -240,9 +265,29 @@ impl WuQuantizer {
         let mut cutr = 0i32;
         let maxr = self.maximize(set1, RED, set1.r0 + 1, set1.r1, &mut cutr, whole_r, whole_g, whole_b, whole_w);
         let mut cutg = 0i32;
-        let maxg = self.maximize(set1, GREEN, set1.g0 + 1, set1.g1, &mut cutg, whole_r, whole_g, whole_b, whole_w);
+        let maxg = self.maximize(
+            set1,
+            GREEN,
+            set1.g0 + 1,
+            set1.g1,
+            &mut cutg,
+            whole_r,
+            whole_g,
+            whole_b,
+            whole_w,
+        );
         let mut cutb = 0i32;
-        let maxb = self.maximize(set1, BLUE, set1.b0 + 1, set1.b1, &mut cutb, whole_r, whole_g, whole_b, whole_w);
+        let maxb = self.maximize(
+            set1,
+            BLUE,
+            set1.b0 + 1,
+            set1.b1,
+            &mut cutb,
+            whole_r,
+            whole_g,
+            whole_b,
+            whole_w,
+        );
         let dir = if maxr >= maxg && maxr >= maxb {
             if cutr < 0 {
                 return false;
@@ -280,7 +325,8 @@ impl WuQuantizer {
         set1.vol = ((set1.r1 - set1.r0) as i64 * (set1.g1 - set1.g0) as i64 * (set1.b1 - set1.b0) as i64) as i32;
         set2.vol = ((set2.r1 - set2.r0) as i64 * (set2.g1 - set2.g0) as i64 * (set2.b1 - set2.b0) as i64) as i32;
         true
-    }fn get_index_static(inr: usize, ing: usize, inb: usize) -> usize {
+    }
+    fn get_index_static(inr: usize, ing: usize, inb: usize) -> usize {
         (inr << 10) + (inr << 6) + inr + (ing << 5) + ing + inb
     }
 
@@ -296,8 +342,7 @@ impl WuQuantizer {
         }
     }
 
-
-    pub fn quantize(&mut self) ->Result<(),String> {
+    pub fn quantize(&mut self) -> Result<(), String> {
         self.hist3d();
         self.m3d();
 
@@ -323,7 +368,11 @@ impl WuQuantizer {
             let next = next.unwrap();
             let mut new_cube = Box_::default();
             if self.cut(&mut cube_vec[next], &mut new_cube) {
-                vv[next] = if cube_vec[next].vol > 1 { self.var(&cube_vec[next]) } else { 0.0 };
+                vv[next] = if cube_vec[next].vol > 1 {
+                    self.var(&cube_vec[next])
+                } else {
+                    0.0
+                };
                 vv.push(if new_cube.vol > 1 { self.var(&new_cube) } else { 0.0 });
                 cube_vec.push(new_cube);
             } else {
@@ -355,7 +404,7 @@ impl WuQuantizer {
         }
         for i in 0..self.size {
             self.qadd[i] = self.tag[self.qadd[i] as usize] as u16;
-        };
+        }
         Ok(())
     }
 
@@ -368,15 +417,14 @@ impl WuQuantizer {
         }
         palette
     }
-
 }
 
 #[cfg(test)]
 mod tests {
-    use std::time::Instant;
     use super::*;
     use crate::enums::ImgColor;
     use crate::read::read_in_path;
+    use std::time::Instant;
 
     #[test]
     fn test_basic_colors() {
@@ -384,11 +432,12 @@ mod tests {
             "/run/media/umzi/H/nahuy_pixiv/WOSManga_train_test/hq/000012.png",
             ImgColor::RGB,
         )
-            .unwrap();
+        .unwrap();
         let data = img.get_data::<u8>().unwrap();
         let t = Instant::now();
         let mut quantizer = WuQuantizer::new(data, 3000).unwrap();
-        quantizer.quantize();quantizer.quantize();
+        quantizer.quantize();
+        quantizer.quantize();
         println!("{:?}", t.elapsed());
         // Output the palette
         let palette = quantizer.get_palette();

@@ -5,10 +5,10 @@ use crate::ops::encode::QuantizeTablePy;
 use crate::structure::enums::{ColorCVT, ColorMode, DotTypePy, ImgFormat, ResizesAlg, ResizesFilter, TypeNoise};
 
 use crate::ops::encode::JpegSamplingFactorPy;
+use crate::ops::get_palette::PyPaletteAlg;
 use crate::ops::lines::{PyBezier, PyBresenham, PyPoint};
 use pepecore::rayon_mode;
 use pyo3::prelude::*;
-use crate::ops::get_palette::PyPaletteAlg;
 
 #[pyfunction(name = "rayon_mode")]
 #[pyo3(signature = (on=true))]
@@ -36,7 +36,7 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::original_size::real_w, m)?)?;
     m.add_function(wrap_pyfunction!(ops::lines::py_line, m)?)?;
     m.add_function(wrap_pyfunction!(ops::read_write::read_tiler, m)?)?;
-    m.add_function(wrap_pyfunction!(ops::get_palette::py_palette,m)?)?;
+    m.add_function(wrap_pyfunction!(ops::get_palette::py_palette, m)?)?;
     m.add_class::<PyPaletteAlg>()?;
     m.add_class::<PyPoint>()?;
     m.add_class::<PyBresenham>()?;

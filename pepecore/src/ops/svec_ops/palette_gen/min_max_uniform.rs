@@ -1,5 +1,7 @@
 pub fn min_max_uniform(img: &[u8], color_count: usize) -> Vec<f32> {
-    if img.is_empty() || color_count == 0 { return vec![]; }
+    if img.is_empty() || color_count == 0 {
+        return vec![];
+    }
 
     // 1. Поиск границ (быстрый проход)
     let (mut r_min, mut r_max) = (img[0], img[0]);
@@ -7,9 +9,21 @@ pub fn min_max_uniform(img: &[u8], color_count: usize) -> Vec<f32> {
     let (mut b_min, mut b_max) = (img[2], img[2]);
 
     for c in img.chunks_exact(3) {
-        if c[0] < r_min { r_min = c[0]; } else if c[0] > r_max { r_max = c[0]; }
-        if c[1] < g_min { g_min = c[1]; } else if c[1] > g_max { g_max = c[1]; }
-        if c[2] < b_min { b_min = c[2]; } else if c[2] > b_max { b_max = c[2]; }
+        if c[0] < r_min {
+            r_min = c[0];
+        } else if c[0] > r_max {
+            r_max = c[0];
+        }
+        if c[1] < g_min {
+            g_min = c[1];
+        } else if c[1] > g_max {
+            g_max = c[1];
+        }
+        if c[2] < b_min {
+            b_min = c[2];
+        } else if c[2] > b_max {
+            b_max = c[2];
+        }
     }
 
     // 2. Жадное распределение уровней по приоритетам
@@ -21,7 +35,9 @@ pub fn min_max_uniform(img: &[u8], color_count: usize) -> Vec<f32> {
         // Пробуем увеличить G (приоритет 1)
         if (g_l + 1) * r_l * b_l <= color_count {
             g_l += 1;
-        } else { break; } // Если даже G не лезет, выходим
+        } else {
+            break;
+        } // Если даже G не лезет, выходим
 
         // Пробуем увеличить R (приоритет 2)
         if (r_l + 1) * g_l * b_l <= color_count {
@@ -52,9 +68,11 @@ pub fn min_max_uniform(img: &[u8], color_count: usize) -> Vec<f32> {
 
 #[inline(always)]
 fn lerp(min: u8, max: u8, step: usize, total: usize) -> f32 {
-    if total <= 1 { return min as f32; }
+    if total <= 1 {
+        return min as f32;
+    }
     let t = step as f32 / (total - 1) as f32;
-    ((min as f32) * (1.0 - t) + (max as f32) * t)/255.0
+    ((min as f32) * (1.0 - t) + (max as f32) * t) / 255.0
 }
 #[cfg(test)]
 mod tests {
@@ -69,9 +87,9 @@ mod tests {
             "/run/media/umzi/H/nahuy_pixiv/WOSManga_train_test/hq/000012.png",
             ImgColor::RGB,
         )
-            .unwrap();
+        .unwrap();
         let data = img.get_data::<u8>().unwrap();
-        let mi = min_max_uniform(data,32);
+        let mi = min_max_uniform(data, 32);
         // for (i, c) in palette.iter().enumerate() {
         //     println!("  {}: RGB({}, {}, {})", i, c.0, c.1, c.2);
         // }
