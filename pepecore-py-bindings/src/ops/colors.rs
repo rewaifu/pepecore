@@ -78,7 +78,7 @@ pub fn py_color_levels<'py>(
 }
 
 #[pyfunction(name = "screentone")]
-#[pyo3(signature = (img, dot_size, angle = None, dot_type = DotTypePy::CIRCLE,scale = None, resize_alg=ResizesAlg::Conv(ResizesFilter::CatmullRom)))]
+#[pyo3(signature = (img, dot_size, angle = None, dot_type = DotTypePy::CIRCLE,scale = None, resize_alg=ResizesAlg::Conv(ResizesFilter::CatmullRom), disable_auto_dot=false))]
 pub fn py_screentone<'py>(
     py: Python<'py>,
     img: Bound<'py, PyAny>,
@@ -87,6 +87,7 @@ pub fn py_screentone<'py>(
     dot_type: DotTypePy,
     scale: Option<f32>,
     resize_alg: ResizesAlg,
+    disable_auto_dot: bool,
 ) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;
     let channels = img.shape.get_channels().unwrap_or(1);
@@ -98,12 +99,12 @@ pub fn py_screentone<'py>(
 
     if let Some(angle) = angle {
         if let Some(scale) = scale {
-            py.detach(|| ssaa_rotate_screentone(&mut img, dot_size, angle, &dot_type.into(), scale, resize_alg.into()));
+            py.detach(|| ssaa_rotate_screentone(&mut img, dot_size, angle, &dot_type.into(), scale, resize_alg.into(), disable_auto_dot));
         } else {
             py.detach(|| rotate_screentone(&mut img, dot_size, angle, &dot_type.into()));
         }
     } else if let Some(scale) = scale {
-        py.detach(|| ssaa_screentone(&mut img, dot_size, &dot_type.into(), scale, resize_alg.into()));
+        py.detach(|| ssaa_screentone(&mut img, dot_size, &dot_type.into(), scale, resize_alg.into(), disable_auto_dot));
     } else {
         py.detach(|| screentone(&mut img, dot_size, &dot_type.into()));
     }
@@ -116,7 +117,7 @@ pub fn py_screentone<'py>(
 }
 
 #[pyfunction(name = "halftone")]
-#[pyo3(signature = (img, dot_sizes, angles = None, dot_types = None,scale = None, resize_alg=ResizesAlg::Conv(ResizesFilter::CatmullRom)))]
+#[pyo3(signature = (img, dot_sizes, angles = None, dot_types = None,scale = None, resize_alg=ResizesAlg::Conv(ResizesFilter::CatmullRom), disable_auto_dot = false))]
 pub fn py_halftone<'py>(
     py: Python<'py>,
     img: Bound<'py, PyAny>,
@@ -125,6 +126,7 @@ pub fn py_halftone<'py>(
     dot_types: Option<Vec<DotTypePy>>,
     scale: Option<f32>,
     resize_alg: ResizesAlg,
+    disable_auto_dot: bool,
 ) -> PyResult<Bound<'py, PyAny>> {
     let mut img = img.to_svec(py)?;
     let dot_types = dot_types.unwrap_or_else(|| vec![DotTypePy::CIRCLE; dot_sizes.len()]);
@@ -132,12 +134,12 @@ pub fn py_halftone<'py>(
 
     if let Some(angles) = angles {
         if let Some(scale) = scale {
-            py.detach(|| ssaa_rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types, scale, resize_alg.into()).unwrap());
+            py.detach(|| ssaa_rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types, scale, resize_alg.into(), disable_auto_dot).unwrap());
         } else {
             py.detach(|| rotate_halftone(&mut img, &dot_sizes, &angles, &dot_types).unwrap());
         }
     } else if let Some(scale) = scale {
-        py.detach(|| ssaa_halftone(&mut img, &dot_sizes, &dot_types, scale, resize_alg.into()).unwrap());
+        py.detach(|| ssaa_halftone(&mut img, &dot_sizes, &dot_types, scale, resize_alg.into(), disable_auto_dot).unwrap());
     } else {
         py.detach(|| halftone(&mut img, &dot_sizes, &dot_types).unwrap());
     }
