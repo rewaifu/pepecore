@@ -115,6 +115,7 @@ fn apply_ssaa_halftone<T>(
     dot_type: &[DotType],
     scale: f32,
     resize_alg: ResizeAlg,
+    disable_auto_dot: bool,
 ) -> Result<(), HalftoneError>
 where
     T: HalftonePixel + Debug + std::marker::Send + std::marker::Sync,
@@ -135,7 +136,7 @@ where
     let mut dot_matrices = Vec::with_capacity(channels);
 
     for index in 0..channels {
-        let size = (dot_sizes[index] as f32 * scale) as usize;
+        let size = if disable_auto_dot {dot_sizes[index]} else{(dot_sizes[index] as f32 * scale) as usize};
         let bias = size / 2;
         let doubled = size * 2;
         let matrix = if size > 0 {
@@ -326,6 +327,7 @@ fn apply_ssaa_rotate_halftone<T>(
     dot_type: &[DotType],
     scale: f32,
     resize_alg: ResizeAlg,
+    disable_auto_dot: bool,
 ) -> Result<(), HalftoneError>
 where
     T: HalftonePixel + Debug + std::marker::Send + std::marker::Sync,
@@ -348,7 +350,7 @@ where
 
     // Precompute matrices and rotation sin/cos for each channel
     for i in 0..channels {
-        let size = (dot_sizes[i] as f32 * scale) as usize;
+        let size = if disable_auto_dot {dot_sizes[i]} else{(dot_sizes[i] as f32 * scale) as usize};
         let doubled = size * 2;
         let matrix = if size > 0 {
             let kernel = dot_create(size, &dot_type[i]);
@@ -455,11 +457,12 @@ pub fn ssaa_halftone(
     dot_type: &[DotType],
     scale: f32,
     resize_alg: ResizeAlg,
+    disable_auto_dot: bool,
 ) -> Result<(), HalftoneError> {
     match img.pixel_type() {
-        PixelType::F32 => apply_ssaa_halftone::<f32>(img, dot_sizes, dot_type, scale, resize_alg),
-        PixelType::U8 => apply_ssaa_halftone::<u8>(img, dot_sizes, dot_type, scale, resize_alg),
-        PixelType::U16 => apply_ssaa_halftone::<u16>(img, dot_sizes, dot_type, scale, resize_alg),
+        PixelType::F32 => apply_ssaa_halftone::<f32>(img, dot_sizes, dot_type, scale, resize_alg, disable_auto_dot),
+        PixelType::U8 => apply_ssaa_halftone::<u8>(img, dot_sizes, dot_type, scale, resize_alg, disable_auto_dot),
+        PixelType::U16 => apply_ssaa_halftone::<u16>(img, dot_sizes, dot_type, scale, resize_alg, disable_auto_dot),
     }
 }
 /// Apply rotated halftone to `img` dispatching by pixel type.
@@ -480,10 +483,11 @@ pub fn ssaa_rotate_halftone(
     dot_type: &[DotType],
     scale: f32,
     resize_alg: ResizeAlg,
+    disable_auto_dot: bool,
 ) -> Result<(), HalftoneError> {
     match img.pixel_type() {
-        PixelType::F32 => apply_ssaa_rotate_halftone::<f32>(img, dot_sizes, angles, dot_type, scale, resize_alg),
-        PixelType::U8 => apply_ssaa_rotate_halftone::<u8>(img, dot_sizes, angles, dot_type, scale, resize_alg),
-        PixelType::U16 => apply_ssaa_rotate_halftone::<u16>(img, dot_sizes, angles, dot_type, scale, resize_alg),
+        PixelType::F32 => apply_ssaa_rotate_halftone::<f32>(img, dot_sizes, angles, dot_type, scale, resize_alg, disable_auto_dot),
+        PixelType::U8 => apply_ssaa_rotate_halftone::<u8>(img, dot_sizes, angles, dot_type, scale, resize_alg, disable_auto_dot),
+        PixelType::U16 => apply_ssaa_rotate_halftone::<u16>(img, dot_sizes, angles, dot_type, scale, resize_alg, disable_auto_dot),
     }
 }

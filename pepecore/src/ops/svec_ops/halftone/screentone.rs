@@ -114,10 +114,11 @@ fn apply_ssaa_screentone<T: HalftonePixel + std::marker::Send + std::marker::Syn
     dot_type: &DotType,
     scale: f32,
     resize_alg: ResizeAlg,
+    disable_auto_dot: bool,
 ) {
     let (h, w, _) = img.shape();
     let mut_img = img.get_mut_vec::<T>().unwrap();
-    let dot_size = (dot_size as f32 * scale).round() as usize;
+    let dot_size = if disable_auto_dot {dot_size} else {(dot_size as f32 * scale).round() as usize};
     let dot_matrix = dot_create(dot_size, dot_type);
     let dot_matrix_data = dot_matrix.get_data::<f32>().unwrap();
     let lx_bias = dot_size / 2;
@@ -183,10 +184,11 @@ fn apply_rotate_ssaa_screentone<T: HalftonePixel + std::marker::Send + std::mark
     dot_type: &DotType,
     scale: f32,
     resize_alg: ResizeAlg,
+    disable_auto_dot: bool
 ) {
     let (h, w, _) = img.shape();
     let mut_img = img.get_mut_vec::<T>().unwrap();
-    let dot_size = (dot_size as f32 * scale).round() as usize;
+    let dot_size = if disable_auto_dot {dot_size} else {(dot_size as f32 * scale).round() as usize};
     let dot_matrix = dot_create(dot_size, dot_type);
     let dot_matrix_data = dot_matrix.get_data::<f32>().unwrap();
     let (s_h, s_w) = ((h as f32 * scale) as usize, (w as f32 * scale) as usize);
@@ -266,11 +268,11 @@ pub fn screentone(img: &mut SVec, dot_size: usize, dot_type: &DotType) {
     }
 }
 /// Public API: apply SSAA non-rotated screentone, dispatching by pixel type.
-pub fn ssaa_screentone(img: &mut SVec, dot_size: usize, dot_type: &DotType, scale: f32, resize_alg: ResizeAlg) {
+pub fn ssaa_screentone(img: &mut SVec, dot_size: usize, dot_type: &DotType, scale: f32, resize_alg: ResizeAlg, disable_auto_dot: bool) {
     match img.pixel_type() {
-        PixelType::F32 => apply_ssaa_screentone::<f32>(img, dot_size, dot_type, scale, resize_alg),
-        PixelType::U8 => apply_ssaa_screentone::<u8>(img, dot_size, dot_type, scale, resize_alg),
-        PixelType::U16 => apply_ssaa_screentone::<u16>(img, dot_size, dot_type, scale, resize_alg),
+        PixelType::F32 => apply_ssaa_screentone::<f32>(img, dot_size, dot_type, scale, resize_alg, disable_auto_dot),
+        PixelType::U8 => apply_ssaa_screentone::<u8>(img, dot_size, dot_type, scale, resize_alg, disable_auto_dot),
+        PixelType::U16 => apply_ssaa_screentone::<u16>(img, dot_size, dot_type, scale, resize_alg, disable_auto_dot),
     }
 }
 /// Public API: apply rotated screentone, dispatching by pixel type.
@@ -289,10 +291,11 @@ pub fn ssaa_rotate_screentone(
     dot_type: &DotType,
     scale: f32,
     resize_alg: ResizeAlg,
+    disable_auto_dot: bool
 ) {
     match img.pixel_type() {
-        PixelType::F32 => apply_rotate_ssaa_screentone::<f32>(img, dot_size, angle, dot_type, scale, resize_alg),
-        PixelType::U8 => apply_rotate_ssaa_screentone::<u8>(img, dot_size, angle, dot_type, scale, resize_alg),
-        PixelType::U16 => apply_rotate_ssaa_screentone::<u16>(img, dot_size, angle, dot_type, scale, resize_alg),
+        PixelType::F32 => apply_rotate_ssaa_screentone::<f32>(img, dot_size, angle, dot_type, scale, resize_alg, disable_auto_dot),
+        PixelType::U8 => apply_rotate_ssaa_screentone::<u8>(img, dot_size, angle, dot_type, scale, resize_alg, disable_auto_dot),
+        PixelType::U16 => apply_rotate_ssaa_screentone::<u16>(img, dot_size, angle, dot_type, scale, resize_alg, disable_auto_dot),
     }
 }
