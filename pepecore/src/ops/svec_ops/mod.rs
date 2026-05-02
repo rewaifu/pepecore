@@ -9,3 +9,4 @@ pub mod normalize;
 pub mod palette_gen;
 pub mod real_size;
 pub mod resize;
+pub mod best_tile;

@@ -428,6 +428,9 @@ impl SVec {
     pub fn get_mut_ptr<T: 'static>(&mut self) -> Result<*mut T, Error> {
         self.get_data_mut::<T>().map(|slice| slice.as_mut_ptr())
     }
+    pub fn get_ptr<T: 'static>(&self) -> Result<*const T, Error> {
+        self.get_data::<T>().map(|slice| slice.as_ptr())
+    }
 }
 impl fmt::Debug for SVec {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

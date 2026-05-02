@@ -37,6 +37,8 @@ fn pepeline(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ops::lines::py_line, m)?)?;
     m.add_function(wrap_pyfunction!(ops::read_write::read_tiler, m)?)?;
     m.add_function(wrap_pyfunction!(ops::get_palette::py_palette, m)?)?;
+    m.add_function(wrap_pyfunction!(ops::noise::py_fiber_noise,m)?)?;
+    m.add_class::<ops::best_tile::PyBastTile>()?;
     m.add_class::<PyPaletteAlg>()?;
     m.add_class::<PyPoint>()?;
     m.add_class::<PyBresenham>()?;
