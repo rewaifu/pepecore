@@ -9,3 +9,4 @@ pub mod old_rebind;
 pub mod original_size;
 pub mod read_write;
 pub mod resize;
+pub mod best_tile;

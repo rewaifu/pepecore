@@ -169,6 +169,27 @@ class Bezier:
 
 def line(lines:Sequence[Bresenham|Bezier],h:int,w:int) -> np.ndarray:...
 def read_tiler(path: str | Path, color_mode: ImgColor = ..., img_format: ImgFormat = ..., tile_size: int = 512) -> np.ndarray:...
+# py_fiber_noise<'py>(
+#     py: Python<'py>,
+#     h:usize,
+#     w:usize,
+#     fibers:usize,
+#     angle_kappa:f64,
+#     angle_mu:f64,
+#     length_range:(i32,i32),
+#     thickness_range:(i32,i32),
+#     parallel: bool,
+#     seed:u64,
+# )'
+# tile_y:u16,
+# tile_x:u16
+class BestTile:
+    def __init__(self,img:np.ndarray,tile_y:int,tile_x:int)->None: ...
+    def get_max_coords(self)->tuple[int,int]:...
+    def get_top_n(self,n:int,threshold:float|None=None)->Vec<tuple[int,int]>:...
+    def get_top_n_(self,n:int,threshold:float|None=None)->Vec<tuple[int,int]>:...
+
+def fiber_noise(h:int,w:int,fibers:int,angle_kappa:float,angle_mu:float,length_range:tuple[int, int],thickness_range:tuple[int, int],parallel:bool,seed:int)->np.ndarray:...
 __all__ = [
     'CVTColor',
     'DotType',
@@ -200,5 +221,7 @@ __all__ = [
     'line',
     'read_tiler',
     'get_palette',
-    'PaletteAlg'
+    'PaletteAlg',
+    'fiber_noise',
+    'BestTile'
 ]
