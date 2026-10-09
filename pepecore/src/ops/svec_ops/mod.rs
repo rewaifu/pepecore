@@ -1,4 +1,5 @@
 pub mod color_levels;
+pub mod compose;
 pub mod crop;
 pub mod cvtcolor;
 pub mod halftone;
