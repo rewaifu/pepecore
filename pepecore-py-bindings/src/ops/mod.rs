@@ -1,4 +1,5 @@
 pub mod colors;
+pub mod compose;
 pub mod crop;
 pub mod encode;
 pub mod get_palette;
