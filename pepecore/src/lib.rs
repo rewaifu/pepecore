@@ -53,6 +53,7 @@ pub use ops::read::read;
 pub use ops::save::save;
 pub use ops::svec_ops::real_size;
 
+pub use ops::svec_ops::compose::{OverlayAnchor, OverlayFit, PsdComposeOptions, PsdCompression, compose_to_psd};
 pub use ops::svec_ops::color_levels;
 pub use ops::svec_ops::crop::crop;
 pub use ops::svec_ops::cvtcolor::cvt_color;

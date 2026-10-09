@@ -20,7 +20,7 @@ fn atomic_add_f32(cell: &AtomicU32, val: f32) {
 }
 #[inline(always)]
 fn faster_exp(x: f32) -> f32 {
-    let v = (x * 1.442695 + 127.0) * 8388608.0;
+    let v = (x * std::f32::consts::LOG2_E + 127.0) * 8388608.0;
     if v <= 0.0 { return 0.0; }
     f32::from_bits(v as u32)
 }

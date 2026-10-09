@@ -1,11 +1,11 @@
 [package]
 name = "pepecore-array"
-version = "0.2.0"
+version = "0.2.1"
 edition.workspace = true
 publish.workspace = true
 
 [dependencies]
-thiserror = "2.0.12"
+thiserror = "2.0.21"
 rustfft = "6"
 realfft = "3"
 [features]

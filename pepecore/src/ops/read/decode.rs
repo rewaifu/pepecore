@@ -9,30 +9,56 @@ use crate::errors::DecodeError;
 use crate::errors::DecodeError::{ImgDecodingError, PsdDecodingError};
 use image::DynamicImage;
 use pepecore_array::{ImgData, SVec, Shape};
-use zune_core::bytestream::ZCursor;
-use zune_psd::PSDDecoder;
-/// Decode raw size information from PSD header bytes.
+use photocraft_psd::PsdFile;
+/// Decode merged PSD image into planar big-endian samples plus geometry.
 ///
-/// Reads a slice of 8 bytes (offset within PSD header) and returns
-/// the (height, width) as u32 values.
-///
-/// # Parameters
-///
-/// - `bytes`: 8-byte slice from PSD header containing size info.
-///
-/// # Returns
-///
-/// A tuple `(height, width)` of the PSD canvas.
-fn decode_size_psd(bytes: &[u8]) -> (u32, u32) {
-    let mut height: u32 = 0;
-    let mut width: u32 = 0;
-    height += bytes[3] as u32;
-    height += if bytes[2] > 0 { bytes[2] as u32 * 256 } else { 0 };
-    height += if bytes[1] > 0 { bytes[1] as u32 * 256 * 256 } else { 0 };
-    width += bytes[7] as u32;
-    width += if bytes[6] > 0 { bytes[6] as u32 * 256 } else { 0 };
-    width += if bytes[5] > 0 { bytes[5] as u32 * 256 * 256 } else { 0 };
-    (height, width)
+/// Returns `(channels, height, width, depth, planar_bytes)` where planar data
+/// is `channels × height × width` samples in file order (native big-endian
+/// for 16-bit). Only 8-bit and 16-bit depths are supported for pixel output.
+fn decode_merged_planar(buffer: &[u8]) -> Result<(usize, usize, usize, u16, Vec<u8>), DecodeError> {
+    let file = PsdFile::from_bytes(buffer).map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
+    let header = &file.header;
+    let depth = header.depth;
+    if depth != 8 && depth != 16 {
+        return Err(PsdDecodingError(format!("Unsupported PSD bit depth = {}", depth)));
+    }
+    let height = header.height as usize;
+    let width = header.width as usize;
+    let channels = header.channels as usize;
+    if channels == 0 || channels > 56 {
+        return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+    }
+    let planar = file.decode_merged().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
+    let sample_bytes = (depth as usize) / 8;
+    let expected = channels * height * width * sample_bytes;
+    if planar.len() != expected {
+        return Err(PsdDecodingError(format!(
+            "PSD payload size mismatch: got {} bytes, expected {}",
+            planar.len(),
+            expected
+        )));
+    }
+    Ok((channels, height, width, depth, planar))
+}
+/// Interleave planar 8-bit channels into pixel order.
+fn interleave_u8(planar: &[u8], channels: usize, pixels: usize) -> Vec<u8> {
+    let mut out = vec![0u8; pixels * channels];
+    for (ch, plane) in planar.chunks(pixels).enumerate() {
+        for (i, &v) in plane.iter().enumerate() {
+            out[i * channels + ch] = v;
+        }
+    }
+    out
+}
+/// Interleave planar big-endian 16-bit channels into native u16 pixels.
+fn interleave_u16_be(planar: &[u8], channels: usize, pixels: usize) -> Vec<u16> {
+    let mut out = vec![0u16; pixels * channels];
+    for (ch, plane) in planar.chunks(pixels * 2).enumerate() {
+        for (i, pair) in plane.chunks_exact(2).enumerate() {
+            out[i * channels + ch] = u16::from_be_bytes([pair[0], pair[1]]);
+        }
+    }
+    out
 }
 /// Decode PSD buffer into a dynamic integer SVec (packed channels).
 ///
@@ -47,311 +73,216 @@ fn decode_size_psd(bytes: &[u8]) -> (u32, u32) {
 ///
 /// Returns `PsdDecodingError` if PSD decoding fails or channel count is unexpected.
 pub fn psd_din_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
-    let size_bites: &[u8] = &buffer[14..22];
-    let channels = if buffer[13] > 1 { Some(buffer[13] as usize) } else { None };
-
-    let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
-
-    let (height, width) = decode_size_psd(size_bites);
-    Ok(if buffer[23] == 16 {
+    let (channels, height, width, depth, planar) = decode_merged_planar(buffer)?;
+    let shape_channels = if channels > 1 { Some(channels) } else { None };
+    let pixels = height * width;
+    Ok(if depth == 16 {
         SVec::new(
-            Shape::new(height as usize, width as usize, channels),
-            ImgData::U16(unsafe {
-                let len = px.len() / 2;
-                let ptr = px.as_ptr();
-                let mut vec = Vec::with_capacity(len);
-
-                for i in 0..len {
-                    let lo = *ptr.add(i * 2) as u16;
-                    let hi = *ptr.add(i * 2 + 1) as u16;
-                    vec.push((hi << 8) | lo);
-                }
-                vec
-            }),
+            Shape::new(height, width, shape_channels),
+            ImgData::U16(interleave_u16_be(&planar, channels, pixels)),
         )
     } else {
-        SVec::new(Shape::new(height as usize, width as usize, channels), ImgData::U8(px))
+        SVec::new(
+            Shape::new(height, width, shape_channels),
+            ImgData::U8(interleave_u8(&planar, channels, pixels)),
+        )
     })
 }
 /// Decode PSD buffer into RGB SVec.
 ///
 /// Converts grayscale PSDs to RGB by replicating channels, preserves alpha if present.
 pub fn psd_rgb_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
-    let size_bites: &[u8] = &buffer[14..22];
-    let channels = buffer[13];
-
-    let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
-
-    let (height, width) = decode_size_psd(size_bites);
-    Ok(SVec::new(
-        Shape::new(height as usize, width as usize, Some(3)),
-        if buffer[23] == 16 {
-            ImgData::U16(if channels == 3 {
-                unsafe {
-                    let len = px.len() / 2;
-                    let ptr = px.as_ptr();
-                    let mut vec = Vec::with_capacity(len);
-
-                    for i in 0..len {
-                        let lo = *ptr.add(i * 2) as u16;
-                        let hi = *ptr.add(i * 2 + 1) as u16;
-                        vec.push((hi << 8) | lo);
-                    }
-                    vec
-                }
-            } else if channels == 1 {
-                unsafe {
-                    let len = px.len() / 2;
-                    let ptr = px.as_ptr();
-                    let mut vec = Vec::with_capacity(len);
-
-                    for i in 0..len {
-                        let lo = *ptr.add(i * 2) as u16;
-                        let hi = *ptr.add(i * 2 + 1) as u16;
-                        vec.push((hi << 8) | lo);
-                        vec.push((hi << 8) | lo);
-                        vec.push((hi << 8) | lo);
-                    }
-                    vec
-                }
-            } else {
-                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
-            })
-        } else if channels == 3 {
-            ImgData::U8(px)
+    let (channels, height, width, depth, planar) = decode_merged_planar(buffer)?;
+    let pixels = height * width;
+    let shape = Shape::new(height, width, Some(3));
+    if depth == 16 {
+        let px = interleave_u16_be(&planar, channels, pixels);
+        let data = if channels == 3 {
+            px
         } else if channels == 1 {
-            let mut rgb_values = Vec::with_capacity(px.len() * 3);
-
+            let mut rgb = Vec::with_capacity(pixels * 3);
             for gray in &px {
-                rgb_values.extend([*gray, *gray, *gray].iter().copied());
+                rgb.extend_from_slice(&[*gray, *gray, *gray]);
             }
-            ImgData::U8(rgb_values)
+            rgb
+        } else if channels == 4 {
+            let mut rgb = Vec::with_capacity(pixels * 3);
+            for rgba in px.chunks_exact(4) {
+                rgb.extend_from_slice(&rgba[..3]);
+            }
+            rgb
         } else {
             return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
-        },
-    ))
+        };
+        Ok(SVec::new(shape, ImgData::U16(data)))
+    } else {
+        let px = interleave_u8(&planar, channels, pixels);
+        let data = if channels == 3 {
+            px
+        } else if channels == 1 {
+            let mut rgb = Vec::with_capacity(pixels * 3);
+            for gray in &px {
+                rgb.extend_from_slice(&[*gray, *gray, *gray]);
+            }
+            rgb
+        } else if channels == 4 {
+            let mut rgb = Vec::with_capacity(pixels * 3);
+            for rgba in px.chunks_exact(4) {
+                rgb.extend_from_slice(&rgba[..3]);
+            }
+            rgb
+        } else {
+            return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+        };
+        Ok(SVec::new(shape, ImgData::U8(data)))
+    }
 }
 /// Decode PSD buffer into RGBA SVec, adding full alpha channel.
 ///
 /// Always outputs 4 channels, setting alpha to max value if missing.
 pub fn psd_rgba_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
-    let size_bites: &[u8] = &buffer[14..22];
-    let channels = buffer[13];
-
-    let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
-
-    let (height, width) = decode_size_psd(size_bites);
-    Ok(SVec::new(
-        Shape::new(height as usize, width as usize, Some(4)),
-        if buffer[23] == 16 {
-            ImgData::U16(if channels == 3 {
-                unsafe {
-                    let len = px.len() / 2;
-                    let ptr = px.as_ptr();
-                    let mut vec = Vec::with_capacity((height * width * 4) as usize);
-
-                    for i in 0..len {
-                        let lo = *ptr.add(i * 2) as u16;
-                        let hi = *ptr.add(i * 2 + 1) as u16;
-                        vec.push((hi << 8) | lo);
-                        if i % 3 == 2 {
-                            vec.push(u16::MAX); // Добавляем новое значение в конец каждого блока
-                        }
-                    }
-                    vec
-                }
-            } else if channels == 1 {
-                unsafe {
-                    let len = px.len() / 2;
-                    let ptr = px.as_ptr();
-                    let mut vec = Vec::with_capacity((height * width * 4) as usize);
-
-                    for i in 0..len {
-                        let lo = *ptr.add(i * 2) as u16;
-                        let hi = *ptr.add(i * 2 + 1) as u16;
-                        vec.push((hi << 8) | lo);
-                        vec.push((hi << 8) | lo);
-                        vec.push((hi << 8) | lo);
-                        vec.push(u16::MAX);
-                    }
-                    vec
-                }
-            } else {
-                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
-            })
+    let (channels, height, width, depth, planar) = decode_merged_planar(buffer)?;
+    let pixels = height * width;
+    let shape = Shape::new(height, width, Some(4));
+    if depth == 16 {
+        let px = interleave_u16_be(&planar, channels, pixels);
+        let data = if channels == 4 {
+            px
         } else if channels == 3 {
-            let mut vec = Vec::with_capacity((height * width * 4) as usize);
-            for i in 0..px.len() / 3 {
-                // Добавляем три элемента из старого вектора
-                vec.push(vec[i * 3]);
-                vec.push(vec[i * 3 + 1]);
-                vec.push(vec[i * 3 + 2]);
-                vec.push(u8::MAX);
+            let mut rgba = Vec::with_capacity(pixels * 4);
+            for rgb in px.chunks_exact(3) {
+                rgba.extend_from_slice(rgb);
+                rgba.push(u16::MAX);
             }
-            ImgData::U8(vec)
+            rgba
         } else if channels == 1 {
-            let mut rgb_values = Vec::with_capacity(px.len() * 4);
-
+            let mut rgba = Vec::with_capacity(pixels * 4);
             for gray in &px {
-                rgb_values.extend([*gray, *gray, *gray, u8::MAX].iter().copied());
+                rgba.extend_from_slice(&[*gray, *gray, *gray, u16::MAX]);
             }
-            ImgData::U8(rgb_values)
+            rgba
         } else {
             return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
-        },
-    ))
+        };
+        Ok(SVec::new(shape, ImgData::U16(data)))
+    } else {
+        let px = interleave_u8(&planar, channels, pixels);
+        let data = if channels == 4 {
+            px
+        } else if channels == 3 {
+            let mut rgba = Vec::with_capacity(pixels * 4);
+            for rgb in px.chunks_exact(3) {
+                rgba.extend_from_slice(rgb);
+                rgba.push(u8::MAX);
+            }
+            rgba
+        } else if channels == 1 {
+            let mut rgba = Vec::with_capacity(pixels * 4);
+            for gray in &px {
+                rgba.extend_from_slice(&[*gray, *gray, *gray, u8::MAX]);
+            }
+            rgba
+        } else {
+            return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+        };
+        Ok(SVec::new(shape, ImgData::U8(data)))
+    }
+}
+/// BT.709 luma for 8-bit RGB triples.
+fn luma_u8(rgb: &[u8]) -> u8 {
+    (rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8
+}
+/// BT.709 luma for 16-bit RGB triples.
+fn luma_u16(rgb: &[u16]) -> u16 {
+    (0.2126 * rgb[0] as f32 + 0.7152 * rgb[1] as f32 + 0.0722 * rgb[2] as f32) as u16
 }
 /// Decode PSD buffer to grayscale SVec, converting RGB using BT.709.
 ///
 /// Produces a single-channel image.
 pub fn psd_gray_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
-    let size_bites: &[u8] = &buffer[14..22];
-    let channels = buffer[13];
-
-    let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
-
-    let (height, width) = decode_size_psd(size_bites);
-    Ok(SVec::new(
-        Shape::new(height as usize, width as usize, None),
-        if buffer[23] == 16 {
-            ImgData::U16(if channels == 3 {
-                unsafe {
-                    let len = px.len() / 6; // Так как каждый пиксель состоит из 3 компонентов, каждый по 2 байта
-                    let ptr = px.as_ptr();
-                    let mut vec = Vec::with_capacity(len);
-
-                    for i in 0..len {
-                        // Чтение по 2 байта для каждого компонента (R, G, B)
-                        let r_lo = *ptr.add(i * 6) as u16; // младший байт для R
-                        let r_hi = *ptr.add(i * 6 + 1) as u16; // старший байт для R
-                        let g_lo = *ptr.add(i * 6 + 2) as u16; // младший байт для G
-                        let g_hi = *ptr.add(i * 6 + 3) as u16; // старший байт для G
-                        let b_lo = *ptr.add(i * 6 + 4) as u16; // младший байт для B
-                        let b_hi = *ptr.add(i * 6 + 5) as u16; // старший байт для B
-
-                        // Собираем компоненты RGB из двух байт
-                        let r = (r_hi << 8) | r_lo; // R (16 бит)
-                        let g = (g_hi << 8) | g_lo; // G (16 бит)
-                        let b = (b_hi << 8) | b_lo; // B (16 бит)
-
-                        // Преобразование в яркость по стандарту BT.709
-                        let gray = (0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32) as u16;
-
-                        // Добавляем преобразованный серый цвет
-                        vec.push(gray);
-                    }
-
-                    vec
-                }
-            } else if channels == 1 {
-                unsafe {
-                    let len = px.len() / 2;
-                    let ptr = px.as_ptr();
-                    let mut vec = Vec::with_capacity(len);
-
-                    for i in 0..len {
-                        let lo = *ptr.add(i * 2) as u16;
-                        let hi = *ptr.add(i * 2 + 1) as u16;
-                        vec.push((hi << 8) | lo);
-                    }
-                    vec
-                }
-            } else {
-                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
-            })
+    let (channels, height, width, depth, planar) = decode_merged_planar(buffer)?;
+    let pixels = height * width;
+    let shape = Shape::new(height, width, None);
+    if depth == 16 {
+        let px = interleave_u16_be(&planar, channels, pixels);
+        let data = if channels == 3 {
+            px.chunks_exact(3).map(luma_u16).collect()
         } else if channels == 1 {
-            ImgData::U8(px)
-        } else if channels == 3 {
-            let mut values = Vec::with_capacity(px.len() / 3);
-
-            for rgb in px.chunks(3) {
-                values.push((rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8);
-            }
-            ImgData::U8(values)
+            px
+        } else if channels == 4 {
+            px.chunks_exact(4).map(|rgba| luma_u16(&rgba[..3])).collect()
         } else {
             return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
-        },
-    ))
+        };
+        Ok(SVec::new(shape, ImgData::U16(data)))
+    } else {
+        let px = interleave_u8(&planar, channels, pixels);
+        let data = if channels == 1 {
+            px
+        } else if channels == 3 {
+            px.chunks_exact(3).map(luma_u8).collect()
+        } else if channels == 4 {
+            px.chunks_exact(4).map(|rgba| luma_u8(&rgba[..3])).collect()
+        } else {
+            return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+        };
+        Ok(SVec::new(shape, ImgData::U8(data)))
+    }
 }
 /// Decode PSD buffer to grayscale with alpha SVec.
 ///
 /// Outputs two channels: brightness and full alpha
 pub fn psd_graya_decode(buffer: &[u8]) -> Result<SVec, DecodeError> {
-    let size_bites: &[u8] = &buffer[14..22];
-    let channels = buffer[13];
-
-    let mut decoder = PSDDecoder::new(ZCursor::new(buffer));
-    let px = decoder.decode_raw().map_err(|e| PsdDecodingError(format!("{:?}", e)))?;
-
-    let (height, width) = decode_size_psd(size_bites);
-    Ok(SVec::new(
-        Shape::new(height as usize, width as usize, Some(2)),
-        if buffer[23] == 16 {
-            ImgData::U16(if channels == 3 {
-                unsafe {
-                    let len = px.len() / 3; // Так как каждый пиксель состоит из 3 компонентов, каждый по 2 байта
-                    let ptr = px.as_ptr();
-                    let mut vec = Vec::with_capacity(len);
-
-                    for i in 0..len {
-                        // Чтение по 2 байта для каждого компонента (R, G, B)
-                        let r_lo = *ptr.add(i * 6) as u16; // младший байт для R
-                        let r_hi = *ptr.add(i * 6 + 1) as u16; // старший байт для R
-                        let g_lo = *ptr.add(i * 6 + 2) as u16; // младший байт для G
-                        let g_hi = *ptr.add(i * 6 + 3) as u16; // старший байт для G
-                        let b_lo = *ptr.add(i * 6 + 4) as u16; // младший байт для B
-                        let b_hi = *ptr.add(i * 6 + 5) as u16; // старший байт для B
-
-                        // Собираем компоненты RGB из двух байт
-                        let r = (r_hi << 8) | r_lo; // R (16 бит)
-                        let g = (g_hi << 8) | g_lo; // G (16 бит)
-                        let b = (b_hi << 8) | b_lo; // B (16 бит)
-
-                        // Преобразование в яркость по стандарту BT.709
-                        let gray = (0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32) as u16;
-
-                        // Добавляем преобразованный серый цвет
-                        vec.push(gray);
-                        vec.push(u16::MAX)
-                    }
-
-                    vec
-                }
-            } else if channels == 1 {
-                unsafe {
-                    let len = px.len() / 2;
-                    let ptr = px.as_ptr();
-                    let mut vec = Vec::with_capacity(len);
-
-                    for i in 0..len {
-                        let lo = *ptr.add(i * 2) as u16;
-                        let hi = *ptr.add(i * 2 + 1) as u16;
-                        vec.push((hi << 8) | lo);
-                        vec.push(u16::MAX)
-                    }
-                    vec
-                }
-            } else {
-                return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
-            })
-        } else if channels == 1 {
-            ImgData::U8(px.iter().flat_map(|&x| vec![x, u8::MAX]).collect())
-        } else if channels == 3 {
-            let mut values = Vec::with_capacity(px.len() / 3);
-
-            for rgb in px.chunks(3) {
-                values.push((rgb[0] as f32 * 0.2126 + rgb[1] as f32 * 0.7152 + rgb[2] as f32 * 0.0722) as u8);
-                values.push(u8::MAX)
+    let (channels, height, width, depth, planar) = decode_merged_planar(buffer)?;
+    let pixels = height * width;
+    let shape = Shape::new(height, width, Some(2));
+    if depth == 16 {
+        let px = interleave_u16_be(&planar, channels, pixels);
+        let mut data = Vec::with_capacity(pixels * 2);
+        if channels == 3 || channels == 4 {
+            let step = channels;
+            for pix in px.chunks_exact(step) {
+                data.push(luma_u16(&pix[..3]));
+                data.push(u16::MAX);
             }
-            ImgData::U8(values)
+        } else if channels == 1 {
+            for gray in &px {
+                data.push(*gray);
+                data.push(u16::MAX);
+            }
+        } else if channels == 2 {
+            for ga in px.chunks_exact(2) {
+                data.push(ga[0]);
+                data.push(ga[1]);
+            }
         } else {
             return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
-        },
-    ))
+        }
+        Ok(SVec::new(shape, ImgData::U16(data)))
+    } else {
+        let px = interleave_u8(&planar, channels, pixels);
+        let mut data = Vec::with_capacity(pixels * 2);
+        if channels == 3 || channels == 4 {
+            let step = channels;
+            for pix in px.chunks_exact(step) {
+                data.push(luma_u8(&pix[..3]));
+                data.push(u8::MAX);
+            }
+        } else if channels == 1 {
+            for gray in &px {
+                data.push(*gray);
+                data.push(u8::MAX);
+            }
+        } else if channels == 2 {
+            for ga in px.chunks_exact(2) {
+                data.push(ga[0]);
+                data.push(ga[1]);
+            }
+        } else {
+            return Err(PsdDecodingError(format!("Unexpected channel count = {}", channels)));
+        }
+        Ok(SVec::new(shape, ImgData::U8(data)))
+    }
 }
 
 /// Decode common image buffer into dynamic SVec (all color modes).
