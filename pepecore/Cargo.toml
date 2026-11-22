@@ -32,3 +32,7 @@ ahash = "0.8.12"
 
 [features]
 encode = ["dep:jpeg-encoder"]
+
+[[bench]]
+name = "masked_screentone"
+harness = false

@@ -2,6 +2,8 @@ pub mod color_levels;
 pub mod crop;
 pub mod cvtcolor;
 pub mod halftone;
+/// Mask-driven grayscale screentone renderer.
+pub mod new_halftone;
 pub mod jpeg;
 pub mod line;
 pub mod noise;
