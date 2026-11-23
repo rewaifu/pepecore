@@ -36,3 +36,7 @@ encode = ["dep:jpeg-encoder"]
 [[bench]]
 name = "masked_screentone"
 harness = false
+
+[[bench]]
+name = "jpeg_degrade"
+harness = false

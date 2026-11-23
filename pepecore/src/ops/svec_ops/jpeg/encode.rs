@@ -1,106 +1,63 @@
+pub use super::plane::jpeg_compress_one_ch;
 use crate::enums::YCbCrRatio;
-use crate::ops::svec_ops::jpeg::fdct::{fdct, idct_int};
 use crate::ops::svec_ops::jpeg::quantize::{QuantizationTable, QuantizationTableType};
 use crate::ops::svec_ops::jpeg::ycbcr::{data_to_ycbcr, ycbcr_to_data};
 use pepecore_array::SVec;
+use rayon::prelude::*;
 
-fn quantize_block(block: &mut [i16; 64], table: &QuantizationTable) {
-    for i in 0..64 {
-        block[i] = table.quantize(block[i], i);
+fn compress_rgb<const X: usize, const Y: usize>(
+    data: &mut [u8],
+    h: usize,
+    w: usize,
+    luma: &QuantizationTable,
+    chroma: &QuantizationTable,
+) {
+    let stride = w.checked_mul(3).expect("RGB row overflow");
+    assert_eq!(data.len(), h.checked_mul(stride).expect("RGB frame overflow"));
+    // Align bands to both DCT grids. Each worker converts, transforms and
+    // reconstructs its own band while its three planes are still cache-hot.
+    let band_height = h.min(8 * Y);
+    let process = |rgb: &mut [u8]| {
+        let rows = rgb.len() / stride;
+        let (mut y, mut cb, mut cr) = data_to_ycbcr::<X, Y>(rgb, rows, w);
+        let cw = w.div_ceil(X);
+        let ch = rows.div_ceil(Y);
+        jpeg_compress_one_ch(&mut y, rows, w, luma);
+        jpeg_compress_one_ch(&mut cb, ch, cw, chroma);
+        jpeg_compress_one_ch(&mut cr, ch, cw, chroma);
+        ycbcr_to_data::<X, Y>(&y, &cb, &cr, rows, w, rgb);
+    };
+    if data.len() >= 3 * 65536 {
+        data.par_chunks_mut(stride * band_height).for_each(process);
+    } else {
+        data.chunks_mut(stride * band_height).for_each(process);
     }
 }
 
-fn dequantize_block(q_block: &[i16; 64], d_block: &mut [i32; 64], table: &QuantizationTable) {
-    for i in 0..64 {
-        d_block[i] = q_block[i] as i32 * table.get(i) as i32;
-    }
-}
-
-fn get_tile(img: &[u8], img_tile: &mut [i16; 64], x: usize, y: usize, w: usize, h: usize) {
-    let mut n = 0;
-    for iy in y..y + 8 {
-        let clamped_y = if iy < h { iy } else { h - 1 };
-        for ix in x..x + 8 {
-            let clamped_x = if ix < w { ix } else { w - 1 };
-            img_tile[n] = img[clamped_y * w + clamped_x] as i16 - 128;
-            n += 1;
-        }
-    }
-}
-
-fn copy_tile(img: &mut [u8], tile: &[i16; 64], x: usize, y: usize, w: usize, h: usize) {
-    for row in 0..8 {
-        let iy = y + row;
-        if iy >= h {
-            break;
-        }
-        for col in 0..8 {
-            let ix = x + col;
-            if ix >= w {
-                continue;
-            }
-            img[iy * w + ix] = tile[row * 8 + col] as u8;
-        }
-    }
-}
-
-pub fn jpeg_compress_one_ch(data: &mut [u8], h: usize, w: usize, q: &QuantizationTable) {
-    let mut tile = [0i16; 64];
-    let mut dct2 = [0i32; 64];
-
-    let blocks_y = (h + 7) / 8;
-    let blocks_x = (w + 7) / 8;
-
-    for y_idx in 0..blocks_y {
-        for x_idx in 0..blocks_x {
-            let x = x_idx * 8;
-            let y = y_idx * 8;
-            get_tile(data, &mut tile, x, y, w, h);
-            fdct(&mut tile);
-            quantize_block(&mut tile, q);
-            dequantize_block(&tile, &mut dct2, q);
-            idct_int(&mut dct2, &mut tile, 8);
-            copy_tile(data, &tile, x, y, w, h);
-        }
-    }
-}
 pub fn jpeg_compress(img: &mut SVec, quality: u8, qt: &QuantizationTableType, yuv: &YCbCrRatio) {
     img.as_u8();
     let (h, w, c) = img.shape();
-    let data = img.get_data::<u8>().unwrap();
-    let c = c.unwrap_or(1);
-    if c == 3 {
-        let (hor, ver) = match yuv {
-            YCbCrRatio::R444 => (1, 1),
-            YCbCrRatio::R440 => (2, 1),
-            YCbCrRatio::R441 => (4, 1),
-            YCbCrRatio::R422 => (1, 2),
-            YCbCrRatio::R420 => (2, 2),
-            YCbCrRatio::R411 => (1, 4),
-            YCbCrRatio::R410 => (4, 4),
-        };
-        let (mut y, mut u, mut v) = data_to_ycbcr(data, h, w, ver, hor);
-
-        jpeg_compress_one_ch(&mut y, h, w, &QuantizationTable::new_with_quality(qt, quality, true));
-        jpeg_compress_one_ch(
-            &mut u,
-            h / ver,
-            w / hor,
-            &QuantizationTable::new_with_quality(qt, quality, false),
-        );
-        jpeg_compress_one_ch(
-            &mut v,
-            h / ver,
-            w / hor,
-            &QuantizationTable::new_with_quality(qt, quality, false),
-        );
-        ycbcr_to_data(&y, &u, &v, h, w, ver, hor, img.get_mut_ptr().unwrap());
-    } else if c == 1 {
-        jpeg_compress_one_ch(
-            img.get_data_mut().unwrap(),
-            h,
-            w,
-            &QuantizationTable::new_with_quality(qt, quality, true),
-        );
+    if h == 0 || w == 0 {
+        return;
+    }
+    let data = img.get_data_mut::<u8>().unwrap();
+    let luma = QuantizationTable::new_with_quality(qt, quality, true);
+    match c.unwrap_or(1) {
+        1 => jpeg_compress_one_ch(data, h, w, &luma),
+        3 => {
+            let chroma = QuantizationTable::new_with_quality(qt, quality, false);
+            // Horizontal then vertical extent of one chroma sample in luma pixels.
+            let render = match yuv {
+                YCbCrRatio::R444 => compress_rgb::<1, 1>,
+                YCbCrRatio::R440 => compress_rgb::<1, 2>,
+                YCbCrRatio::R441 => compress_rgb::<1, 4>,
+                YCbCrRatio::R422 => compress_rgb::<2, 1>,
+                YCbCrRatio::R420 => compress_rgb::<2, 2>,
+                YCbCrRatio::R411 => compress_rgb::<4, 1>,
+                YCbCrRatio::R410 => compress_rgb::<4, 2>,
+            };
+            render(data, h, w, &luma, &chroma);
+        }
+        _ => {}
     }
 }

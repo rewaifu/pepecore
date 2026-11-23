@@ -251,8 +251,8 @@ impl QuantizationTable {
     }
 
     #[inline]
-    pub fn get(&self, index: usize) -> u8 {
-        (self.table[index].get() >> 3) as u8
+    pub fn get(&self, index: usize) -> u16 {
+        self.table[index].get() >> 3
     }
 
     #[inline]
